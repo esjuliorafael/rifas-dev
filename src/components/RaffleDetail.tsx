@@ -1,9 +1,10 @@
 import React, { useRef, useState, useMemo } from 'react';
 import { useRaffles } from './RaffleContext';
 import { useSettings } from './SettingsContext';
-import { Download, Search, CheckCircle2, User, Clock, Check, Phone, CircleDashed } from 'lucide-react';
+import { Download, Search, CheckCircle2, User, Clock, Check, Phone, CircleDashed, Edit } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
 import { TicketModal } from './TicketModal';
+import { EditRaffleModal } from './EditRaffleModal';
 import { Ticket } from '../types';
 import { injectThemeColorIntoSvg } from '../utils/svgColor';
 import { blendWithWhite } from '../utils/color';
@@ -18,6 +19,7 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
   const [filter, setFilter] = useState<'all' | 'available' | 'reserved' | 'paid'>('all');
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   if (!raffle) {
     return <div>Rifa no encontrada</div>;
@@ -136,14 +138,23 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
             <h2 className="text-3xl font-black text-gray-900">{raffle.name}</h2>
             {raffle.description && <p className="text-gray-500 mt-2 text-lg">{raffle.description}</p>}
           </div>
-          <button 
-            onClick={handleExport}
-            disabled={isExporting}
-            className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-semibold transition-all disabled:opacity-70 whitespace-nowrap shadow-sm"
-          >
-            <Download size={18} />
-            {isExporting ? 'Generando...' : 'Exportar Imagen'}
-          </button>
+          <div className="flex flex-row gap-2">
+            <button
+              onClick={() => setIsEditOpen(true)}
+              className="flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl font-semibold transition-all whitespace-nowrap shadow-sm"
+            >
+              <Edit size={18} />
+              <span className="hidden sm:inline">Editar</span>
+            </button>
+            <button 
+              onClick={handleExport}
+              disabled={isExporting}
+              className="flex items-center justify-center gap-2 bg-gray-900 hover:bg-gray-800 text-white px-5 py-2.5 rounded-xl font-semibold transition-all disabled:opacity-70 whitespace-nowrap shadow-sm"
+            >
+              <Download size={18} />
+              {isExporting ? 'Generando...' : 'Exportar Imagen'}
+            </button>
+          </div>
         </div>
 
         {/* Stats Row */}
@@ -215,27 +226,45 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
         ref={gridRef}
         style={raffle.themeColor ? { backgroundColor: `${raffle.themeColor}1A` } : { backgroundColor: '#f9fafb' }}
       >
-        <div className="mb-6 text-center">
+        <div 
+          className="flex flex-row items-center gap-4 mb-6 pb-6 border-b"
+          style={{ borderBottomColor: raffle.themeColor ? `${raffle.themeColor}4D` : '#e5e7eb' }}
+        >
           {settings.logoUrl && (
-            // FIX 2
-            <div className="flex flex-col items-center justify-center mb-4">
+            <div className="flex flex-col items-center justify-center shrink-0">
               <img 
                 src={raffle.themeColor ? injectThemeColorIntoSvg(settings.logoUrl, raffle.themeColor) : settings.logoUrl} 
                 alt="Logo" 
-                className="w-auto h-24 sm:h-32 object-contain" 
+                className="h-40 w-40 object-contain" 
               />
               {raffle.themeColor && (
-                <div style={{ backgroundColor: raffle.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full max-w-sm" />
+                <div style={{ backgroundColor: raffle.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full" />
               )}
             </div>
           )}
-          <h3 
-            className="text-2xl font-black"
-            style={raffle.themeColor ? { color: raffle.themeColor } : { color: '#111827' }}
+          
+          <div className="flex-1 min-w-0 text-left">
+            <h3 
+              className="text-2xl font-black truncate"
+              style={raffle.themeColor ? { color: raffle.themeColor } : { color: '#111827' }}
+            >
+              {raffle.name}
+            </h3>
+            {raffle.description && (
+              <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+                {raffle.description}
+              </p>
+            )}
+          </div>
+
+          <div 
+            className="shrink-0 flex flex-col items-center justify-center py-2 px-4 rounded-xl shadow-sm"
+            style={{ backgroundColor: raffle.themeColor || '#10b981' }}
           >
-            {raffle.name}
-          </h3>
-          <p className="text-gray-500 font-medium">✨ Costo por boleto: <span className="font-bold" style={raffle.themeColor ? { color: raffle.themeColor } : { color: '#059669' }}>${raffle.pricePerTicket}</span> ✨</p>
+            <span className="text-[10px] font-bold text-white tracking-wider uppercase mb-0.5">Costo Boleto</span>
+            <span className="text-2xl font-black text-white leading-none">${raffle.pricePerTicket}</span>
+            <span className="text-[10px] font-semibold text-white/70 mt-0.5">MXN</span>
+          </div>
         </div>
 
         <div className="flex gap-4 justify-center mb-6 text-sm font-semibold">
@@ -293,6 +322,13 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
           raffleId={raffleId}
           ticket={selectedTicket}
           onClose={() => setSelectedTicket(null)}
+        />
+      )}
+
+      {isEditOpen && (
+        <EditRaffleModal 
+          raffle={raffle} 
+          onClose={() => setIsEditOpen(false)} 
         />
       )}
     </div>

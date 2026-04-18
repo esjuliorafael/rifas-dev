@@ -1,10 +1,11 @@
 import React, { useRef, useState } from 'react';
 import { useTandas } from './TandaContext';
 import { useSettings } from './SettingsContext';
-import { Download, Users, ArrowLeft, CheckCircle2, CircleDashed, Circle } from 'lucide-react';
+import { Download, Users, ArrowLeft, CheckCircle2, CircleDashed, Circle, Edit } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
 import { TandaParticipant } from '../types';
 import { TandaParticipantModal } from './TandaParticipantModal';
+import { EditTandaModal } from './EditTandaModal';
 import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { injectThemeColorIntoSvg } from '../utils/svgColor';
@@ -18,6 +19,7 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
   
   const [selectedParticipant, setSelectedParticipant] = useState<TandaParticipant | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
 
   if (!tanda) return null;
 
@@ -66,14 +68,23 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
           <h2 className="text-3xl font-black text-gray-900">{tanda.name}</h2>
           <p className="text-gray-500 mt-1">{tanda.description}</p>
         </div>
-        <button
-          onClick={exportGrid}
-          disabled={isExporting}
-          className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-75 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-all"
-        >
-          <Download size={18} />
-          <span className="hidden sm:inline">{isExporting ? 'Exportando...' : 'Exportar Imagen'}</span>
-        </button>
+        <div className="flex flex-row gap-2">
+          <button
+            onClick={() => setIsEditOpen(true)}
+            className="flex items-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl font-bold shadow-sm transition-all"
+          >
+            <Edit size={18} />
+            <span className="hidden sm:inline">Editar</span>
+          </button>
+          <button
+            onClick={exportGrid}
+            disabled={isExporting}
+            className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-75 text-white px-5 py-2.5 rounded-xl font-bold shadow-sm transition-all"
+          >
+            <Download size={18} />
+            <span className="hidden sm:inline">{isExporting ? 'Exportando...' : 'Exportar Imagen'}</span>
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
@@ -102,29 +113,46 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
           className="min-w-max p-6 rounded-3xl border border-gray-200"
           style={tanda.themeColor ? { backgroundColor: `${tanda.themeColor}1A` } : { backgroundColor: '#ffffff' }}
         >
-          <div className="mb-6 text-center">
+          <div 
+            className="flex flex-row items-center gap-4 mb-6 pb-6 border-b"
+            style={{ borderBottomColor: tanda.themeColor ? `${tanda.themeColor}4D` : '#e5e7eb' }}
+          >
             {settings.logoUrl && (
-              // FIX 2
-              <div className="flex flex-col items-center justify-center mb-4">
+              <div className="flex flex-col items-center justify-center shrink-0">
                 <img 
                   src={tanda.themeColor ? injectThemeColorIntoSvg(settings.logoUrl, tanda.themeColor) : settings.logoUrl} 
                   alt="Logo" 
-                  className="w-auto h-24 sm:h-32 object-contain" 
+                  className="h-40 w-40 object-contain" 
                 />
                 {tanda.themeColor && (
-                  <div style={{ backgroundColor: tanda.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full max-w-sm" />
+                  <div style={{ backgroundColor: tanda.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full" />
                 )}
               </div>
             )}
-            <h3 
-              className="text-2xl font-black uppercase tracking-tight"
-              style={tanda.themeColor ? { color: tanda.themeColor } : { color: '#111827' }}
+            
+            <div className="flex-1 min-w-0 text-left">
+              <h3 
+                className="text-2xl font-black uppercase tracking-tight truncate"
+                style={tanda.themeColor ? { color: tanda.themeColor } : { color: '#111827' }}
+              >
+                {tanda.name}
+              </h3>
+              <p className="text-gray-500 text-sm mt-1">
+                {tanda.description && <span className="block line-clamp-2">{tanda.description}</span>}
+                <span className="inline-block mt-1 font-semibold bg-gray-100/50 border border-gray-200 px-2.5 py-0.5 rounded-md text-xs text-gray-600">
+                  {tanda.numberOfWeeks} Semanas
+                </span>
+              </p>
+            </div>
+
+            <div 
+              className="shrink-0 flex flex-col items-center justify-center py-2 px-4 rounded-xl shadow-sm"
+              style={{ backgroundColor: tanda.themeColor || '#2563eb' }}
             >
-              {tanda.name}
-            </h3>
-            <p className="text-gray-500 font-medium">
-              {tanda.numberOfWeeks} Semanas x <span className="font-bold" style={tanda.themeColor ? { color: tanda.themeColor } : { color: '#2563eb' }}>${tanda.pricePerWeek}</span>
-            </p>
+              <span className="text-[10px] font-bold text-white tracking-wider uppercase mb-0.5">Pago Semanal</span>
+              <span className="text-2xl font-black text-white leading-none">${tanda.pricePerWeek}</span>
+              <span className="text-[10px] font-semibold text-white/70 mt-0.5">MXN</span>
+            </div>
           </div>
 
           <div className="min-w-max pb-4">
@@ -201,6 +229,13 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
           tandaId={tandaId}
           participant={selectedParticipant}
           onClose={() => setSelectedParticipant(null)}
+        />
+      )}
+
+      {isEditOpen && (
+        <EditTandaModal 
+          tanda={tanda} 
+          onClose={() => setIsEditOpen(false)} 
         />
       )}
     </div>
