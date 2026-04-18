@@ -6,6 +6,7 @@ import { toJpeg } from 'html-to-image';
 import { TicketModal } from './TicketModal';
 import { Ticket } from '../types';
 import { injectThemeColorIntoSvg } from '../utils/svgColor';
+import { blendWithWhite } from '../utils/color';
 
 export function RaffleDetail({ raffleId }: { raffleId: string }) {
   const { getRaffle, updateRaffle } = useRaffles();
@@ -44,7 +45,7 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
       await new Promise(res => setTimeout(res, 100));
       const dataUrl = await toJpeg(gridRef.current, { 
         quality: 0.95,
-        ...(raffle.themeColor ? {} : { backgroundColor: '#f9fafb' }),
+        backgroundColor: raffle.themeColor ? blendWithWhite(raffle.themeColor, 0.1) : '#f9fafb',
         style: {
           padding: '24px',
           margin: '0',

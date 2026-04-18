@@ -8,6 +8,7 @@ import { TandaParticipantModal } from './TandaParticipantModal';
 import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { injectThemeColorIntoSvg } from '../utils/svgColor';
+import { blendWithWhite } from '../utils/color';
 
 export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: () => void }) {
   const { getTanda } = useTandas();
@@ -35,7 +36,7 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
       await new Promise(res => setTimeout(res, 100));
       const dataUrl = await toJpeg(gridRef.current, { 
         quality: 0.95,
-        ...(tanda.themeColor ? {} : { backgroundColor: '#ffffff' })
+        backgroundColor: tanda.themeColor ? blendWithWhite(tanda.themeColor, 0.1) : '#ffffff'
       });
       const link = document.createElement('a');
       link.download = `tanda-${tanda.name.toLowerCase().replace(/\s+/g, '-')}.jpeg`;
