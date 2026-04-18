@@ -27,6 +27,10 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
   const [tandaParticipants, setTandaParticipants] = useState('7');
   const [tandaStartDate, setTandaStartDate] = useState('');
 
+  // Common optional state
+  const [themeColor, setThemeColor] = useState('#10b981'); // Default emerald-500
+  const [useThemeColor, setUseThemeColor] = useState(false);
+
   const openCreate = () => {
     setName('');
     setDescription('');
@@ -38,11 +42,15 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
     setTandaWeeks('7');
     setTandaParticipants('7');
     setTandaStartDate('');
+    setThemeColor('#10b981');
+    setUseThemeColor(false);
     setShowCreate(true);
   }
 
   const handleCreate = (e: React.FormEvent) => {
     e.preventDefault();
+    const finalThemeColor = useThemeColor ? themeColor : undefined;
+    
     if (activeTab === 'rifas') {
       createRaffle({
         name,
@@ -51,7 +59,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
         totalTickets: parseInt(totalTickets, 10),
         opportunities: parseInt(opportunities, 10),
         distribution,
-        drawDate
+        drawDate,
+        themeColor: finalThemeColor
       });
     } else {
       createTanda({
@@ -60,7 +69,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
         pricePerWeek: parseFloat(price),
         numberOfWeeks: parseInt(tandaWeeks, 10),
         numberOfParticipants: parseInt(tandaParticipants, 10),
-        startDate: tandaStartDate
+        startDate: tandaStartDate,
+        themeColor: finalThemeColor
       });
     }
     setShowCreate(false);
@@ -248,9 +258,39 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
                 </>
               )}
               
+              <div className="pt-2 border-t border-gray-100">
+                <label className="flex items-center gap-2 text-sm font-semibold text-gray-700 mb-2 cursor-pointer">
+                  <input 
+                    type="checkbox" 
+                    checked={useThemeColor} 
+                    onChange={e => setUseThemeColor(e.target.checked)}
+                    className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
+                  />
+                  Personalizar color de tema
+                </label>
+                {useThemeColor && (
+                  <div className="flex items-center gap-3 mt-2">
+                    <input 
+                      type="color" 
+                      value={themeColor} 
+                      onChange={e => setThemeColor(e.target.value)}
+                      className="w-12 h-12 p-1 bg-white border border-gray-200 rounded-xl cursor-pointer"
+                    />
+                    <input 
+                      type="text" 
+                      value={themeColor} 
+                      onChange={e => setThemeColor(e.target.value)}
+                      placeholder="#000000"
+                      pattern="^#[0-9a-fA-F]{6}$"
+                      className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono text-gray-700 uppercase"
+                    />
+                  </div>
+                )}
+              </div>
+
               <button 
                 type="submit" 
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold mt-4 transition-colors"
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold mt-6 transition-colors"
               >
                 Crear {activeTab === 'rifas' ? 'Rifa' : 'Tanda'}
               </button>

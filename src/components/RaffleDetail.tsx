@@ -208,15 +208,24 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
       </div>
 
       {/* Exportable Grid Container */}
-      <div className="bg-gray-50 rounded-2xl p-2 md:p-4 overflow-hidden border border-gray-200" ref={gridRef}>
+      <div 
+        className="rounded-2xl p-2 md:p-4 overflow-hidden border border-gray-200" 
+        ref={gridRef}
+        style={raffle.themeColor ? { backgroundColor: `${raffle.themeColor}1A` } : { backgroundColor: '#f9fafb' }}
+      >
         <div className="mb-6 text-center">
           {settings.logoUrl && (
             <div className="flex justify-center mb-4">
-              <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" />
+              <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" style={raffle.themeColor ? { color: raffle.themeColor } : {}} />
             </div>
           )}
-          <h3 className="text-2xl font-black text-gray-900">{raffle.name}</h3>
-          <p className="text-gray-500 font-medium">✨ Costo por boleto: <span className="text-emerald-600 font-bold">${raffle.pricePerTicket}</span> ✨</p>
+          <h3 
+            className="text-2xl font-black"
+            style={raffle.themeColor ? { color: raffle.themeColor } : { color: '#111827' }}
+          >
+            {raffle.name}
+          </h3>
+          <p className="text-gray-500 font-medium">✨ Costo por boleto: <span className="font-bold" style={raffle.themeColor ? { color: raffle.themeColor } : { color: '#059669' }}>${raffle.pricePerTicket}</span> ✨</p>
         </div>
 
         <div className="flex gap-4 justify-center mb-6 text-sm font-semibold">

@@ -95,16 +95,25 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
 
       <div className="overflow-x-auto pb-4">
         {/* Grid Export Container */}
-        <div ref={gridRef} className="bg-white min-w-max p-6 rounded-3xl border border-gray-200">
+        <div 
+          ref={gridRef} 
+          className="min-w-max p-6 rounded-3xl border border-gray-200"
+          style={tanda.themeColor ? { backgroundColor: `${tanda.themeColor}1A` } : { backgroundColor: '#ffffff' }}
+        >
           <div className="mb-6 text-center">
             {settings.logoUrl && (
               <div className="flex justify-center mb-4">
-                <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" />
+                <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" style={tanda.themeColor ? { color: tanda.themeColor } : { backgroundColor: 'transparent' }} />
               </div>
             )}
-            <h3 className="text-2xl font-black text-gray-900 uppercase tracking-tight">{tanda.name}</h3>
+            <h3 
+              className="text-2xl font-black uppercase tracking-tight"
+              style={tanda.themeColor ? { color: tanda.themeColor } : { color: '#111827' }}
+            >
+              {tanda.name}
+            </h3>
             <p className="text-gray-500 font-medium">
-              {tanda.numberOfWeeks} Semanas x <span className="text-blue-600 font-bold">${tanda.pricePerWeek}</span>
+              {tanda.numberOfWeeks} Semanas x <span className="font-bold" style={tanda.themeColor ? { color: tanda.themeColor } : { color: '#2563eb' }}>${tanda.pricePerWeek}</span>
             </p>
           </div>
 

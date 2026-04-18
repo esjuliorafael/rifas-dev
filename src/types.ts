@@ -20,6 +20,7 @@ export interface Raffle {
   distribution: 'lineal' | 'aleatoria';
   totalUniverse: number;
   columnsPreference?: number;
+  themeColor?: string;
   tickets: Record<string, Ticket>;
   createdAt: string;
   drawDate: string;
@@ -43,5 +44,6 @@ export interface Tanda {
   numberOfParticipants: number;
   startDate: string;
   createdAt: string;
+  themeColor?: string;
   participants: Record<string, TandaParticipant>;
 }
