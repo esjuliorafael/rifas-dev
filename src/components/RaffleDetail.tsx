@@ -44,7 +44,7 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
       await new Promise(res => setTimeout(res, 100));
       const dataUrl = await toJpeg(gridRef.current, { 
         quality: 0.95,
-        backgroundColor: raffle.themeColor ? `${raffle.themeColor}1A` : '#f9fafb',
+        ...(raffle.themeColor ? {} : { backgroundColor: '#f9fafb' }),
         style: {
           padding: '24px',
           margin: '0',
