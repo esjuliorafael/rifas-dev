@@ -1,0 +1,6 @@
+{
+  "name": "Rifas Pro",
+  "description": "Plataforma personal para administrar rifas, apartar boletos, y generar tickets de pagos o apartados para enviar por WhatsApp.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
