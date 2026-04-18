@@ -35,7 +35,7 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
       await new Promise(res => setTimeout(res, 100));
       const dataUrl = await toJpeg(gridRef.current, { 
         quality: 0.95,
-        backgroundColor: '#ffffff'
+        backgroundColor: tanda.themeColor ? `${tanda.themeColor}1A` : '#ffffff'
       });
       const link = document.createElement('a');
       link.download = `tanda-${tanda.name.toLowerCase().replace(/\s+/g, '-')}.jpeg`;
