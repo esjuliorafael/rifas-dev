@@ -7,6 +7,7 @@ import { TandaParticipant } from '../types';
 import { TandaParticipantModal } from './TandaParticipantModal';
 import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { injectThemeColorIntoSvg } from '../utils/svgColor';
 
 export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: () => void }) {
   const { getTanda } = useTandas();
@@ -104,7 +105,11 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
             {settings.logoUrl && (
               // FIX 2
               <div className="flex flex-col items-center justify-center mb-4">
-                <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" />
+                <img 
+                  src={tanda.themeColor ? injectThemeColorIntoSvg(settings.logoUrl, tanda.themeColor) : settings.logoUrl} 
+                  alt="Logo" 
+                  className="w-auto h-24 sm:h-32 object-contain" 
+                />
                 {tanda.themeColor && (
                   <div style={{ backgroundColor: tanda.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full max-w-sm" />
                 )}

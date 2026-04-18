@@ -5,6 +5,7 @@ import { Download, Search, CheckCircle2, User, Clock, Check, Phone, CircleDashed
 import { toJpeg } from 'html-to-image';
 import { TicketModal } from './TicketModal';
 import { Ticket } from '../types';
+import { injectThemeColorIntoSvg } from '../utils/svgColor';
 
 export function RaffleDetail({ raffleId }: { raffleId: string }) {
   const { getRaffle, updateRaffle } = useRaffles();
@@ -217,7 +218,11 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
           {settings.logoUrl && (
             // FIX 2
             <div className="flex flex-col items-center justify-center mb-4">
-              <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" />
+              <img 
+                src={raffle.themeColor ? injectThemeColorIntoSvg(settings.logoUrl, raffle.themeColor) : settings.logoUrl} 
+                alt="Logo" 
+                className="w-auto h-24 sm:h-32 object-contain" 
+              />
               {raffle.themeColor && (
                 <div style={{ backgroundColor: raffle.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full max-w-sm" />
               )}
