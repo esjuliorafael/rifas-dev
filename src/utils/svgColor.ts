@@ -17,14 +17,36 @@ export function injectThemeColorIntoSvg(dataUrl: string, color: string): string 
     // Insertar style="color: {color};" en el elemento raíz <svg>
     svgText = svgText.replace(/(<svg\b[^>]*?)>/i, `$1 style="color: ${color};">`);
 
-    // Reemplazar atributos fill="..." que no sean "none"
-    svgText = svgText.replace(/fill=(['"])(.*?)\1/gi, (match, quote, value) => {
-      return value.toLowerCase() === 'none' ? match : `fill="currentColor"`;
+    // CASO 1: Bloques <style>...<style>
+    svgText = svgText.replace(/<style[^>]*>([\s\S]*?)<\/style>/gi, (match, styleContent) => {
+      let modifiedStyle = styleContent;
+      
+      // Reemplazar fill: ...
+      modifiedStyle = modifiedStyle.replace(/(fill\s*:\s*)([^;}]+)/gi, (m: string, prefix: string, val: string) => {
+        const v = val.trim().toLowerCase();
+        if (v === 'none' || v === 'transparent') return m;
+        return `${prefix}${color}`;
+      });
+
+      // Reemplazar stroke: ...
+      modifiedStyle = modifiedStyle.replace(/(stroke\s*:\s*)([^;}]+)/gi, (m: string, prefix: string, val: string) => {
+        const v = val.trim().toLowerCase();
+        if (v === 'none' || v === 'transparent') return m;
+        return `${prefix}${color}`;
+      });
+
+      return match.replace(styleContent, modifiedStyle);
     });
 
-    // Reemplazar atributos stroke="..." que no sean "none"
+    // CASO 2: Atributos inline fill="..." y stroke="..."
+    svgText = svgText.replace(/fill=(['"])(.*?)\1/gi, (match, quote, value) => {
+      const v = value.trim().toLowerCase();
+      return (v === 'none' || v === 'transparent') ? match : `fill="${color}"`;
+    });
+
     svgText = svgText.replace(/stroke=(['"])(.*?)\1/gi, (match, quote, value) => {
-      return value.toLowerCase() === 'none' ? match : `stroke="currentColor"`;
+      const v = value.trim().toLowerCase();
+      return (v === 'none' || v === 'transparent') ? match : `stroke="${color}"`;
     });
 
     // Encode again handling UTF-8 safely
