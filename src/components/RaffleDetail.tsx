@@ -215,8 +215,12 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
       >
         <div className="mb-6 text-center">
           {settings.logoUrl && (
-            <div className="flex justify-center mb-4">
-              <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" style={raffle.themeColor ? { color: raffle.themeColor } : {}} />
+            // FIX 2
+            <div className="flex flex-col items-center justify-center mb-4">
+              <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" />
+              {raffle.themeColor && (
+                <div style={{ backgroundColor: raffle.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full max-w-sm" />
+              )}
             </div>
           )}
           <h3 

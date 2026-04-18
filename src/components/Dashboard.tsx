@@ -29,6 +29,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
 
   // Common optional state
   const [themeColor, setThemeColor] = useState('#10b981'); // Default emerald-500
+  // FIX 1
+  const [themeColorText, setThemeColorText] = useState('#10b981');
   const [useThemeColor, setUseThemeColor] = useState(false);
 
   const openCreate = () => {
@@ -43,6 +45,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
     setTandaParticipants('7');
     setTandaStartDate('');
     setThemeColor('#10b981');
+    // FIX 1
+    setThemeColorText('#10b981');
     setUseThemeColor(false);
     setShowCreate(true);
   }
@@ -194,7 +198,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
                           <label className="block text-sm font-semibold text-gray-700 mb-1">Distribución</label>
                           <select 
                             value={distribution}
-                          onChange={(e) => setDistribution(e.target.value as any)}
+                          // FIX 4
+                          onChange={(e) => setDistribution(e.target.value as 'lineal' | 'aleatoria')}
                           className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                         >
                           <option value="lineal">Lineal (Secuencial)</option>
@@ -270,16 +275,26 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
                 </label>
                 {useThemeColor && (
                   <div className="flex items-center gap-3 mt-2">
+                    {/* FIX 1 */}
                     <input 
                       type="color" 
                       value={themeColor} 
-                      onChange={e => setThemeColor(e.target.value)}
+                      onChange={e => {
+                        setThemeColor(e.target.value);
+                        setThemeColorText(e.target.value);
+                      }}
                       className="w-12 h-12 p-1 bg-white border border-gray-200 rounded-xl cursor-pointer"
                     />
                     <input 
                       type="text" 
-                      value={themeColor} 
-                      onChange={e => setThemeColor(e.target.value)}
+                      value={themeColorText} 
+                      onChange={e => {
+                        const val = e.target.value;
+                        setThemeColorText(val);
+                        if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+                          setThemeColor(val);
+                        }
+                      }}
                       placeholder="#000000"
                       pattern="^#[0-9a-fA-F]{6}$"
                       className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 font-mono text-gray-700 uppercase"

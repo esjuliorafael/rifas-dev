@@ -102,8 +102,12 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
         >
           <div className="mb-6 text-center">
             {settings.logoUrl && (
-              <div className="flex justify-center mb-4">
-                <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" style={tanda.themeColor ? { color: tanda.themeColor } : { backgroundColor: 'transparent' }} />
+              // FIX 2
+              <div className="flex flex-col items-center justify-center mb-4">
+                <img src={settings.logoUrl} alt="Logo" className="w-auto h-24 sm:h-32 object-contain" />
+                {tanda.themeColor && (
+                  <div style={{ backgroundColor: tanda.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full max-w-sm" />
+                )}
               </div>
             )}
             <h3 
