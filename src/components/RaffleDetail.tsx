@@ -253,7 +253,7 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
         style={raffle.themeColor ? { backgroundColor: `${raffle.themeColor}1A` } : { backgroundColor: '#f9fafb' }}
       >
         <div 
-          className="flex flex-row items-center gap-4 mb-6 pb-6 border-b"
+          className="flex flex-row items-center gap-4 mb-6 pb-4 border-b"
           style={{ borderBottomColor: raffle.themeColor ? `${raffle.themeColor}4D` : '#e5e7eb' }}
         >
           {settings.logoUrl && (
@@ -263,9 +263,6 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
                 alt="Logo" 
                 className="h-40 w-40 object-contain" 
               />
-              {raffle.themeColor && (
-                <div style={{ backgroundColor: raffle.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full" />
-              )}
             </div>
           )}
           
@@ -277,19 +274,39 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
               {raffle.name}
             </h3>
             {raffle.description && (
-              <p className="text-gray-500 text-sm mt-1 line-clamp-2">
+              <p className="text-gray-500 text-base font-bold mt-1 line-clamp-2">
                 {raffle.description}
               </p>
             )}
           </div>
 
-          <div 
-            className="shrink-0 flex flex-col items-center justify-center py-2 px-4 rounded-xl shadow-sm"
-            style={{ backgroundColor: raffle.themeColor || '#10b981' }}
-          >
-            <span className="text-[10px] font-bold text-white tracking-wider uppercase mb-0.5">Costo Boleto</span>
-            <span className="text-2xl font-black text-white leading-none">${raffle.pricePerTicket}</span>
-            <span className="text-[10px] font-semibold text-white/70 mt-0.5">MXN</span>
+          <div className="shrink-0 flex flex-col sm:flex-row gap-2">
+            <div 
+              className="shrink-0 flex flex-col items-center justify-center py-4 px-4 rounded-xl shadow-sm"
+              style={{ backgroundColor: raffle.themeColor || '#10b981' }}
+            >
+              <span className="text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none">Costo x Boleto</span>
+              <span className="text-[40px] font-black text-white leading-[40px]">${raffle.pricePerTicket}</span>
+              <span className="text-xs font-semibold text-white/70 mt-0.5">MXN</span>
+            </div>
+            <div 
+              className="shrink-0 flex flex-col items-center justify-center py-4 px-4 rounded-xl shadow-sm"
+              style={{ backgroundColor: raffle.themeColor || '#10b981' }}
+            >
+              <span className="text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none">Boletos</span>
+              <span className="text-[40px] font-black text-white leading-[40px]">{raffle.totalTickets}</span>
+              <span className="text-xs font-semibold text-white/70 mt-0.5 uppercase tracking-wider">DISPONIBLES</span>
+            </div>
+            {(raffle.opportunities && raffle.opportunities > 1) ? (
+              <div 
+                className="shrink-0 flex flex-col items-center justify-center py-4 px-4 rounded-xl shadow-sm"
+                style={{ backgroundColor: raffle.themeColor || '#10b981' }}
+              >
+                <span className="text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none">Opps</span>
+                <span className="text-[40px] font-black text-white leading-[40px]">{raffle.opportunities}</span>
+                <span className="text-xs font-semibold text-white/70 mt-0.5 uppercase tracking-wider">POR BOLETO</span>
+              </div>
+            ) : null}
           </div>
         </div>
 

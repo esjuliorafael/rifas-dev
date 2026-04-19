@@ -114,7 +114,7 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
           style={tanda.themeColor ? { backgroundColor: `${tanda.themeColor}1A` } : { backgroundColor: '#ffffff' }}
         >
           <div 
-            className="flex flex-row items-center gap-4 mb-6 pb-6 border-b"
+            className="flex flex-row items-center gap-4 mb-6 pb-4 border-b"
             style={{ borderBottomColor: tanda.themeColor ? `${tanda.themeColor}4D` : '#e5e7eb' }}
           >
             {settings.logoUrl && (
@@ -124,9 +124,6 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
                   alt="Logo" 
                   className="h-40 w-40 object-contain" 
                 />
-                {tanda.themeColor && (
-                  <div style={{ backgroundColor: tanda.themeColor, height: '3px', borderRadius: '9999px', marginTop: '8px' }} className="w-full" />
-                )}
               </div>
             )}
             
@@ -137,7 +134,7 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
               >
                 {tanda.name}
               </h3>
-              <p className="text-gray-500 text-sm mt-1">
+              <p className="text-gray-500 text-base font-bold mt-1">
                 {tanda.description && <span className="block line-clamp-2">{tanda.description}</span>}
                 <span className="inline-block mt-1 font-semibold bg-gray-100/50 border border-gray-200 px-2.5 py-0.5 rounded-md text-xs text-gray-600">
                   {tanda.numberOfWeeks} Semanas
@@ -146,12 +143,12 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
             </div>
 
             <div 
-              className="shrink-0 flex flex-col items-center justify-center py-2 px-4 rounded-xl shadow-sm"
+              className="shrink-0 flex flex-col items-center justify-center py-4 px-4 rounded-xl shadow-sm"
               style={{ backgroundColor: tanda.themeColor || '#2563eb' }}
             >
-              <span className="text-[10px] font-bold text-white tracking-wider uppercase mb-0.5">Pago Semanal</span>
-              <span className="text-2xl font-black text-white leading-none">${tanda.pricePerWeek}</span>
-              <span className="text-[10px] font-semibold text-white/70 mt-0.5">MXN</span>
+              <span className="text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none">Pago Semanal</span>
+              <span className="text-[40px] font-black text-white leading-[40px]">${tanda.pricePerWeek}</span>
+              <span className="text-xs font-semibold text-white/70 mt-0.5 uppercase tracking-wider">MXN</span>
             </div>
           </div>
 
