@@ -75,7 +75,10 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
     setIsExporting(true);
     try {
       await new Promise(res => setTimeout(res, 100)); // wait for render
-      const dataUrl = await toJpeg(receiptRef.current, { quality: 0.95 });
+      const dataUrl = await toJpeg(receiptRef.current, { 
+        quality: 0.95,
+        pixelRatio: 3 
+      });
       const link = document.createElement('a');
       link.download = `ticket-${ticket.id}-${receiptMode}.jpeg`;
       link.href = dataUrl;

@@ -31,10 +31,8 @@ export const TicketReceipt = forwardRef<HTMLDivElement, Props>(({ ticket, raffle
 
   const formatCard = (card?: string) => {
     if (!card) return '';
-    if (card.length >= 4) {
-      return `•••• ${card.slice(-4)}`;
-    }
-    return card;
+    // Agrupa en bloques de 4 dígitos: "5588 1234 5678 9012"
+    return card.replace(/\s/g, '').replace(/(.{4})/g, '$1 ').trim();
   };
 
   const refCode = useMemo(() => {
@@ -54,6 +52,19 @@ export const TicketReceipt = forwardRef<HTMLDivElement, Props>(({ ticket, raffle
         className="px-6 py-6 text-center flex flex-col items-center"
         style={{ backgroundColor: headerBgColor }}
       >
+        {settings.logoUrl && (
+          <img
+            src={settings.logoUrl}
+            alt="Logo"
+            style={{
+              width: '56px',
+              height: '56px',
+              objectFit: 'contain',
+              marginBottom: '8px',
+              borderRadius: '8px',
+            }}
+          />
+        )}
         <p className="text-sm font-bold text-white opacity-80 truncate w-full">{raffle.name}</p>
         
         <div className="mt-2 mb-3">
