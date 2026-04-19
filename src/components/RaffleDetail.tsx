@@ -252,59 +252,83 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
         ref={gridRef}
         style={raffle.themeColor ? { backgroundColor: `${raffle.themeColor}1A` } : { backgroundColor: '#f9fafb' }}
       >
-        <div 
-          className="flex flex-row items-center gap-4 mb-6 pb-4 border-b"
+        <div
+          className="flex flex-col gap-4 mb-6 pb-4 border-b"
           style={{ borderBottomColor: raffle.themeColor ? `${raffle.themeColor}4D` : '#e5e7eb' }}
         >
-          {settings.logoUrl && (
-            <div className="flex flex-col items-center justify-center shrink-0">
-              <img 
-                src={raffle.themeColor ? injectThemeColorIntoSvg(settings.logoUrl, raffle.themeColor) : settings.logoUrl} 
-                alt="Logo" 
-                className="h-40 w-40 object-contain" 
-              />
-            </div>
-          )}
-          
-          <div className="flex-1 min-w-0 text-left">
-            <h3 
-              className="text-2xl font-black truncate"
-              style={raffle.themeColor ? { color: raffle.themeColor } : { color: '#111827' }}
-            >
-              {raffle.name}
-            </h3>
-            {raffle.description && (
-              <p className="text-gray-500 text-base font-bold mt-1 line-clamp-2">
-                {raffle.description}
-              </p>
+          {/* FILA 1: Logo + Nombre */}
+          <div className="flex flex-row items-center gap-3">
+            {settings.logoUrl && (
+              <div className="shrink-0">
+                <img
+                  src={raffle.themeColor ? injectThemeColorIntoSvg(settings.logoUrl, raffle.themeColor) : settings.logoUrl}
+                  alt="Logo"
+                  className="h-16 w-16 sm:h-40 sm:w-40 object-contain"
+                />
+              </div>
             )}
+            <div className="flex-1 min-w-0">
+              <h3
+                className="text-xl sm:text-2xl font-black truncate"
+                style={raffle.themeColor ? { color: raffle.themeColor } : { color: '#111827' }}
+              >
+                {raffle.name}
+              </h3>
+              {raffle.description && (
+                <p className="text-gray-500 text-sm sm:text-base font-bold mt-1 line-clamp-2">
+                  {raffle.description}
+                </p>
+              )}
+            </div>
           </div>
 
-          <div className="shrink-0 flex flex-col sm:flex-row gap-2">
-            <div 
-              className="shrink-0 flex flex-col items-center justify-center py-4 px-4 rounded-xl shadow-sm"
+          {/* FILA 2: Bloques de datos */}
+          <div className="flex flex-row gap-2">
+            {/* Bloque Costo */}
+            <div
+              className="flex-1 flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
               style={{ backgroundColor: raffle.themeColor || '#10b981' }}
             >
-              <span className="text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none">Costo x Boleto</span>
-              <span className="text-[40px] font-black text-white leading-[40px]">${raffle.pricePerTicket}</span>
-              <span className="text-xs font-semibold text-white/70 mt-0.5">MXN</span>
+              <span className="text-[9px] sm:text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none text-center">
+                Costo x Boleto
+              </span>
+              <span className="text-2xl sm:text-[40px] font-black text-white leading-none sm:leading-[40px]">
+                ${raffle.pricePerTicket}
+              </span>
+              <span className="text-[9px] sm:text-xs font-semibold text-white/70 mt-0.5">MXN</span>
             </div>
-            <div 
-              className="shrink-0 flex flex-col items-center justify-center py-4 px-4 rounded-xl shadow-sm"
+
+            {/* Bloque Boletos */}
+            <div
+              className="flex-1 flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
               style={{ backgroundColor: raffle.themeColor || '#10b981' }}
             >
-              <span className="text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none">Boletos</span>
-              <span className="text-[40px] font-black text-white leading-[40px]">{raffle.totalTickets}</span>
-              <span className="text-xs font-semibold text-white/70 mt-0.5 uppercase tracking-wider">DISPONIBLES</span>
+              <span className="text-[9px] sm:text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none text-center">
+                Boletos
+              </span>
+              <span className="text-2xl sm:text-[40px] font-black text-white leading-none sm:leading-[40px]">
+                {raffle.totalTickets}
+              </span>
+              <span className="text-[9px] sm:text-xs font-semibold text-white/70 mt-0.5 uppercase tracking-wider">
+                disponibles
+              </span>
             </div>
-            {(raffle.opportunities && raffle.opportunities > 1) ? (
-              <div 
-                className="shrink-0 flex flex-col items-center justify-center py-4 px-4 rounded-xl shadow-sm"
+
+            {/* Bloque Oportunidades (condicional) */}
+            {raffle.opportunities && raffle.opportunities > 1 ? (
+              <div
+                className="flex-1 flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
                 style={{ backgroundColor: raffle.themeColor || '#10b981' }}
               >
-                <span className="text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none">Opps</span>
-                <span className="text-[40px] font-black text-white leading-[40px]">{raffle.opportunities}</span>
-                <span className="text-xs font-semibold text-white/70 mt-0.5 uppercase tracking-wider">POR BOLETO</span>
+                <span className="text-[9px] sm:text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none text-center">
+                  Opps
+                </span>
+                <span className="text-2xl sm:text-[40px] font-black text-white leading-none sm:leading-[40px]">
+                  {raffle.opportunities}
+                </span>
+                <span className="text-[9px] sm:text-xs font-semibold text-white/70 mt-0.5 uppercase tracking-wider">
+                  por boleto
+                </span>
               </div>
             ) : null}
           </div>
