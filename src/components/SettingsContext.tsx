@@ -1,7 +1,13 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 
-interface Settings {
+export interface Settings {
   logoUrl: string | null;
+  paymentName?: string;
+  paymentBank?: string;
+  paymentClabe?: string;
+  paymentCard?: string;
+  paymentPhone?: string;
+  paymentAlias?: string;
 }
 
 interface SettingsContextType {
@@ -13,15 +19,25 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 
 const SETTINGS_STORAGE_KEY = 'rifas-pro-settings';
 
+const defaultSettings: Settings = {
+  logoUrl: null,
+  paymentName: '',
+  paymentBank: '',
+  paymentClabe: '',
+  paymentCard: '',
+  paymentPhone: '',
+  paymentAlias: ''
+};
+
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<Settings>(() => {
     try {
       const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (stored) return JSON.parse(stored);
+      if (stored) return { ...defaultSettings, ...JSON.parse(stored) };
     } catch (e) {
       console.warn("Failed to load settings", e);
     }
-    return { logoUrl: null };
+    return defaultSettings;
   });
 
   useEffect(() => {

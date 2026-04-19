@@ -253,11 +253,11 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
         style={raffle.themeColor ? { backgroundColor: `${raffle.themeColor}1A` } : { backgroundColor: '#f9fafb' }}
       >
         <div
-          className="flex flex-col gap-4 mb-6 pb-4 border-b"
+          className="flex flex-col sm:flex-row sm:items-center gap-4 mb-6 pb-4 border-b"
           style={{ borderBottomColor: raffle.themeColor ? `${raffle.themeColor}4D` : '#e5e7eb' }}
         >
-          {/* FILA 1: Logo + Nombre */}
-          <div className="flex flex-row items-center gap-3">
+          {/* Logo + Nombre — en desktop ocupan el espacio izquierdo */}
+          <div className="flex flex-row items-center gap-3 flex-1 min-w-0">
             {settings.logoUrl && (
               <div className="shrink-0">
                 <img
@@ -282,11 +282,10 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
             </div>
           </div>
 
-          {/* FILA 2: Bloques de datos */}
-          <div className="flex flex-row gap-2">
-            {/* Bloque Costo */}
+          {/* Bloques de datos — en mobile: fila completa abajo; en desktop: columna derecha */}
+          <div className="flex flex-row gap-2 shrink-0">
             <div
-              className="flex-1 flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
+              className="flex-1 sm:flex-none flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
               style={{ backgroundColor: raffle.themeColor || '#10b981' }}
             >
               <span className="text-[9px] sm:text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none text-center">
@@ -298,9 +297,8 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
               <span className="text-[9px] sm:text-xs font-semibold text-white/70 mt-0.5">MXN</span>
             </div>
 
-            {/* Bloque Boletos */}
             <div
-              className="flex-1 flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
+              className="flex-1 sm:flex-none flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
               style={{ backgroundColor: raffle.themeColor || '#10b981' }}
             >
               <span className="text-[9px] sm:text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none text-center">
@@ -314,10 +312,9 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
               </span>
             </div>
 
-            {/* Bloque Oportunidades (condicional) */}
             {raffle.opportunities && raffle.opportunities > 1 ? (
               <div
-                className="flex-1 flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
+                className="flex-1 sm:flex-none flex flex-col items-center justify-center py-3 px-2 sm:py-4 sm:px-4 rounded-xl shadow-sm"
                 style={{ backgroundColor: raffle.themeColor || '#10b981' }}
               >
                 <span className="text-[9px] sm:text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none text-center">
