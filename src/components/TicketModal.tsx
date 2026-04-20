@@ -22,7 +22,6 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const targetTickets = tickets && tickets.length > 0 ? tickets : (ticket ? [ticket] : []);
-  const isMulti = targetTickets.length > 1;
   const baseTicket = targetTickets[0];
 
   const [name, setName] = useState(baseTicket?.ownerName || '');
@@ -30,6 +29,14 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   const [viewState, setViewState] = useState<'details' | 'receipt'>('details');
   const [receiptMode, setReceiptMode] = useState<'reserved' | 'paid'>('reserved');
   const [isExporting, setIsExporting] = useState(false);
+  const [pendingPayTickets, setPendingPayTickets] = useState<Ticket[]>([]);
+  const [showPayConfirm, setShowPayConfirm] = useState(false);
+  const [actuallyPaidTickets, setActuallyPaidTickets] = useState<Ticket[] | null>(null);
+
+  const displayTickets = actuallyPaidTickets || targetTickets;
+  const isMulti = targetTickets.length > 1;
+  const isDisplayMulti = displayTickets.length > 1;
+  const displayBase = displayTickets[0];
 
   if (!raffle || targetTickets.length === 0) return null;
 
@@ -49,15 +56,45 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   };
 
   const handlePay = () => {
+    const ownerName = baseTicket.ownerName;
+    if (!ownerName) {
+      executePay(targetTickets.map(t => t.id));
+      return;
+    }
+
+    const allTickets = Object.values(raffle.tickets) as Ticket[];
+    const targetIds = new Set(targetTickets.map(t => t.id));
+    
+    const sameClientTickets = allTickets.filter(t => 
+      t.ownerName === ownerName &&
+      t.status === 'reserved' &&
+      !targetIds.has(t.id)
+    );
+
+    if (sameClientTickets.length > 0) {
+      setPendingPayTickets(sameClientTickets);
+      setShowPayConfirm(true);
+    } else {
+      executePay(targetTickets.map(t => t.id));
+    }
+  };
+
+  const executePay = (ids: string[]) => {
     const paidAt = new Date().toISOString();
-    targetTickets.forEach(t => {
-      updateTicket(raffleId, t.id, {
+    ids.forEach(id => {
+      updateTicket(raffleId, id, {
         status: 'paid',
         paidAt
       });
     });
+
+    const allTickets = Object.values(raffle.tickets) as Ticket[];
+    const paidObjs = allTickets.filter(t => ids.includes(t.id)).map(t => ({...t, status: 'paid' as const, paidAt}));
+    setActuallyPaidTickets(paidObjs);
+
     setReceiptMode('paid');
     setViewState('receipt');
+    setShowPayConfirm(false);
   };
 
   const handleCancelReservation = () => {
@@ -96,7 +133,8 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
         pixelRatio: 3 
       });
       const link = document.createElement('a');
-      link.download = `ticket-${isMulti ? 'MULTI' : baseTicket.id}-${receiptMode}.jpeg`;
+      const filenameId = isDisplayMulti ? 'MULTI' : displayBase.id;
+      link.download = `ticket-${filenameId}-${receiptMode}.jpeg`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -109,17 +147,17 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
 
   const copyWhatsAppText = () => {
     let text = `*Rifa: ${raffle.name}*\n`;
-    if (isMulti) {
-      text += `Boletos: *${targetTickets.map(t => t.id).join(', ')}*\n`;
+    if (isDisplayMulti) {
+      text += `Boletos: *${displayTickets.map(t => t.id).join(', ')}*\n`;
     } else {
-      text += `Boleto: *${baseTicket.id}*\n`;
-      if (baseTicket.numbers.length > 1) {
-         text += `Oportunidades extra: ${baseTicket.numbers.slice(1).join(', ')}\n`;
+      text += `Boleto: *${displayBase.id}*\n`;
+      if (displayBase.numbers.length > 1) {
+         text += `Oportunidades extra: ${displayBase.numbers.slice(1).join(', ')}\n`;
       }
     }
     text += `Estado: *${receiptMode === 'paid' ? 'PAGADO ✅' : 'APARTADO ⏳'}*\n`;
-    text += `Costo: $${raffle.pricePerTicket * targetTickets.length}\n`;
-    text += `Nombre: ${baseTicket.ownerName || name}`;
+    text += `Costo: $${raffle.pricePerTicket * displayTickets.length}\n`;
+    text += `Nombre: ${displayBase.ownerName || name}`;
     navigator.clipboard.writeText(text);
     alert('Texto copiado para WhatsApp');
   };
@@ -164,6 +202,56 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
         {/* Content */}
         <div className="p-6 overflow-y-auto pb-12 sm:pb-6">
           {viewState === 'details' ? (
+            showPayConfirm ? (
+              <div className="space-y-6">
+                 <div className="text-center">
+                   <div className="w-16 h-16 bg-amber-100 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                     <Check size={32} strokeWidth={3} />
+                   </div>
+                   <h3 className="text-xl font-bold text-gray-900 mb-2">Otros boletos apartados</h3>
+                   <p className="text-gray-500 text-sm">
+                     El participante <strong>{baseTicket.ownerName}</strong> tiene otros boletos apartados pendientes de pago.
+                   </p>
+                 </div>
+                 
+                 <div className="bg-gray-50 border border-gray-200 rounded-2xl p-4 shadow-inner">
+                   <p className="text-xs text-gray-500 font-bold uppercase tracking-widest mb-3">Boletos pendientes extras</p>
+                   <div className="flex flex-wrap gap-2">
+                     {pendingPayTickets.map(t => (
+                       <div key={t.id} className="bg-white border border-gray-200 px-3 py-1.5 rounded-lg font-bold text-gray-800 shadow-sm flex items-center gap-1">
+                         <span>{t.id}</span>
+                         {t.numbers.length > 1 && <span className="text-[10px] text-gray-400">{t.numbers.slice(1).join(' ')}</span>}
+                       </div>
+                     ))}
+                   </div>
+                   <div className="flex justify-between items-end mt-4 pt-4 border-t border-gray-200">
+                      <span className="text-sm font-semibold text-gray-600">Total extra a pagar:</span>
+                      <span className="text-lg font-black text-emerald-600">${raffle.pricePerTicket * pendingPayTickets.length}</span>
+                   </div>
+                 </div>
+
+                 <div className="flex flex-col gap-3">
+                   <button 
+                     onClick={() => executePay([...targetTickets.map(t => t.id), ...pendingPayTickets.map(t => t.id)])}
+                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 px-4 rounded-xl font-bold shadow-sm active:translate-y-[1px] transition-all"
+                   >
+                     Pagar Todos los {targetTickets.length + pendingPayTickets.length} Boletos
+                   </button>
+                   <button 
+                     onClick={() => executePay(targetTickets.map(t => t.id))}
+                     className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-xl font-bold shadow-sm transition-all"
+                   >
+                     Pagar Solo {isMulti ? 'los Seleccionados' : 'el Seleccionado'}
+                   </button>
+                   <button
+                     onClick={() => setShowPayConfirm(false)}
+                     className="w-full text-gray-500 hover:text-gray-700 text-sm font-bold py-2 mt-2 transition-all"
+                   >
+                     Cancelar
+                   </button>
+                 </div>
+              </div>
+            ) : (
             <div className="space-y-6">
               {/* Status Badge */}
               {!isMulti && (
@@ -307,21 +395,22 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
                 </div>
               )}
             </div>
+          )
           ) : (
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-2xl flex justify-center border border-gray-200 overflow-hidden">
                  {/* Visual Ticket ref */}
-                 {isMulti ? (
+                 {isDisplayMulti ? (
                    <TicketReceiptMulti
                      ref={receiptRef}
-                     tickets={targetTickets}
+                     tickets={displayTickets}
                      raffle={raffle}
                      mode={receiptMode}
                    />
                  ) : (
                    <TicketReceipt 
                      ref={receiptRef} 
-                     ticket={baseTicket} 
+                     ticket={displayBase} 
                      raffle={raffle} 
                      mode={receiptMode}
                    />
