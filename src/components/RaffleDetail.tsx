@@ -417,8 +417,10 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
         )}
       </div>
 
+      <AnimatePresence>
       {selectedTicket && !isSelectionMode && (
         <TicketModal 
+          key={selectedTicket.id}
           raffleId={raffleId}
           ticket={selectedTicket}
           onClose={() => setSelectedTicket(null)}
@@ -427,6 +429,7 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
 
       {isMultiModalOpen && (
         <TicketModal 
+          key="multi-modal"
           raffleId={raffleId}
           tickets={selectedMultiTickets}
           onClose={() => {
@@ -436,6 +439,7 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
           }}
         />
       )}
+      </AnimatePresence>
 
       {isEditOpen && (
         <EditRaffleModal 

@@ -35,11 +35,16 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [showUnpayConfirm, setShowUnpayConfirm] = useState(false);
   const [actuallyPaidTickets, setActuallyPaidTickets] = useState<Ticket[] | null>(null);
+  const [isVisible, setIsVisible] = useState(true);
 
   const displayTickets = actuallyPaidTickets || targetTickets;
   const isMulti = targetTickets.length > 1;
   const isDisplayMulti = displayTickets.length > 1;
   const displayBase = displayTickets[0];
+
+  const handleClose = () => {
+    setIsVisible(false);
+  };
 
   if (!raffle || targetTickets.length === 0) return null;
 
@@ -95,6 +100,13 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
     const paidObjs = allTickets.filter(t => ids.includes(t.id)).map(t => ({...t, status: 'paid' as const, paidAt}));
     setActuallyPaidTickets(paidObjs);
 
+    toast(
+      ids.length > 1
+        ? `${ids.length} boletos registrados como pagados ✓`
+        : `Boleto ${ids[0]} registrado como pagado ✓`,
+      'success'
+    );
+
     setReceiptMode('paid');
     setViewState('receipt');
     setShowPayConfirm(false);
@@ -122,7 +134,7 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
         : `Apartado de ${name} cancelado`,
       'error'
     );
-    onClose();
+    handleClose();
   };
   
   const handleCancelPayment = () => {
@@ -144,7 +156,7 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
       'warning'
     );
     setShowUnpayConfirm(false);
-    onClose();
+    handleClose();
   };
 
   const exportReceipt = async () => {
@@ -187,19 +199,20 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   };
 
   return (
-    <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 perspective-[1000px]">
-        <motion.div 
-          initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
-          className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-          onClick={onClose}
-        />
-        <motion.div 
-          initial={{ y: '100%', opacity: 1 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '100%', opacity: 1 }}
-          transition={{ type: "spring", bounce: 0, duration: 0.4 }}
-          className="bg-white shadow-2xl w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col relative z-10 max-h-[95vh] sm:max-h-[90vh]"
-        >
-          {/* Drag Handle for Mobile */}
+    <AnimatePresence onExitComplete={onClose}>
+      {isVisible && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 perspective-[1000px]">
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={handleClose}
+          />
+          <motion.div 
+            initial={{ y: '100%', opacity: 1 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '100%', opacity: 1 }}
+            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            className="bg-white shadow-2xl w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col relative z-10 max-h-[95vh] sm:max-h-[90vh]"
+          >
+            {/* Drag Handle for Mobile */}
           <div className="w-12 h-1.5 bg-gray-200 rounded-full mx-auto mt-4 mb-2 sm:hidden shrink-0" />
         
           {/* Header */}
@@ -218,7 +231,7 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
                 )}
              </h3>
           </div>
-          <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-full transition-colors">
+          <button onClick={handleClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-full transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -500,11 +513,10 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
                 </div>
               )}
             </div>
-          )
+           )
           ) : (
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-2xl flex justify-center border border-gray-200 overflow-hidden">
-                 {/* Visual Ticket ref */}
                  {isDisplayMulti ? (
                    <TicketReceiptMulti
                      ref={receiptRef}
@@ -544,6 +556,7 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
         </div>
       </motion.div>
     </div>
+    )}
     </AnimatePresence>
   );
 }
