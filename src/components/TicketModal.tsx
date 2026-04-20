@@ -391,6 +391,25 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
                          </button>
                         </>
                      )}
+                     {/* Estado mixto: algunos reserved, algunos paid */}
+                     {!targetTickets.every(t => t.status === 'reserved') &&
+                      !targetTickets.every(t => t.status === 'paid') && (
+                       <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 text-center">
+                         <p className="text-sm font-semibold text-amber-800 mb-1">
+                           Boletos con estados mixtos
+                         </p>
+                         <p className="text-xs text-amber-700 mb-4">
+                           Los boletos seleccionados tienen estados distintos (apartados y pagados).
+                           Gestiona cada boleto individualmente.
+                         </p>
+                         <button
+                           onClick={onClose}
+                           className="text-sm font-bold text-amber-700 underline underline-offset-2"
+                         >
+                           Cerrar
+                         </button>
+                       </div>
+                     )}
                    </div>
                 </div>
               )}
