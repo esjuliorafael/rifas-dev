@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { useRaffles } from './RaffleContext';
 import { Ticket } from '../types';
-import { X, Check, Share2, Download, Trash2, ArrowLeft } from 'lucide-react';
+import { X, Check, Share2, Download, Trash2, ArrowLeft, RotateCcw } from 'lucide-react';
 import { TicketReceipt } from './TicketReceipt';
 import { TicketReceiptMulti } from './TicketReceiptMulti';
 import { toJpeg } from 'html-to-image';
@@ -31,6 +31,8 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   const [isExporting, setIsExporting] = useState(false);
   const [pendingPayTickets, setPendingPayTickets] = useState<Ticket[]>([]);
   const [showPayConfirm, setShowPayConfirm] = useState(false);
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false);
+  const [showUnpayConfirm, setShowUnpayConfirm] = useState(false);
   const [actuallyPaidTickets, setActuallyPaidTickets] = useState<Ticket[] | null>(null);
 
   const displayTickets = actuallyPaidTickets || targetTickets;
@@ -98,29 +100,34 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   };
 
   const handleCancelReservation = () => {
-    if (confirm(isMulti ? '¿Cancelar todos los apartados?' : '¿Cancelar el apartado? El boleto quedará disponible.')) {
-      targetTickets.forEach(t => {
-        updateTicket(raffleId, t.id, {
-          status: 'available',
-          ownerName: '',
-          ownerPhone: '',
-          reservedAt: undefined,
-          paidAt: undefined
-        });
+    setShowCancelConfirm(true);
+  };
+
+  const executeCancelReservation = () => {
+    targetTickets.forEach(t => {
+      updateTicket(raffleId, t.id, {
+        status: 'available',
+        ownerName: '',
+        ownerPhone: '',
+        reservedAt: undefined,
+        paidAt: undefined
       });
-      onClose();
-    }
+    });
+    onClose();
   };
   
   const handleCancelPayment = () => {
-    if (confirm('¿Cambiar de Pagado a Apartado?')) {
-      targetTickets.forEach(t => {
-        updateTicket(raffleId, t.id, {
-          status: 'reserved',
-          paidAt: undefined
-        });
+    setShowUnpayConfirm(true);
+  };
+
+  const executeUnpay = () => {
+    targetTickets.forEach(t => {
+      updateTicket(raffleId, t.id, {
+        status: 'reserved',
+        paidAt: undefined
       });
-    }
+    });
+    setShowUnpayConfirm(false);
   };
 
   const exportReceipt = async () => {
@@ -250,6 +257,68 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
                      Cancelar
                    </button>
                  </div>
+              </div>
+            ) : showCancelConfirm ? (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-red-100 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Trash2 size={32} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    {isMulti ? `¿Cancelar ${targetTickets.length} apartados?` : '¿Cancelar apartado?'}
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {isMulti
+                      ? `Los ${targetTickets.length} boletos quedarán disponibles nuevamente.`
+                      : `El boleto ${baseTicket.id} de ${baseTicket.ownerName} quedará disponible nuevamente.`}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={executeCancelReservation}
+                    className="w-full bg-red-500 hover:bg-red-600 text-white py-3 px-4 rounded-xl font-bold shadow-sm active:translate-y-[1px] transition-all"
+                  >
+                    Sí, cancelar apartado
+                  </button>
+                  <button
+                    onClick={() => setShowCancelConfirm(false)}
+                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-xl font-bold transition-all"
+                  >
+                    No, mantener apartado
+                  </button>
+                </div>
+              </div>
+            ) : showUnpayConfirm ? (
+              <div className="space-y-6">
+                <div className="text-center">
+                  <div className="w-16 h-16 bg-amber-100 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <RotateCcw size={32} />
+                  </div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    ¿Desmarcar pago?
+                  </h3>
+                  <p className="text-gray-500 text-sm">
+                    {isMulti
+                      ? `Los ${targetTickets.length} boletos volverán a estado Apartado.`
+                      : `El boleto ${baseTicket.id} volverá a estado Apartado.`}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <button
+                    onClick={executeUnpay}
+                    className="w-full bg-amber-500 hover:bg-amber-600 text-white py-3 px-4 rounded-xl font-bold shadow-sm active:translate-y-[1px] transition-all"
+                  >
+                    Sí, desmarcar pago
+                  </button>
+                  <button
+                    onClick={() => setShowUnpayConfirm(false)}
+                    className="w-full bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-xl font-bold transition-all"
+                  >
+                    No, mantener como pagado
+                  </button>
+                </div>
               </div>
             ) : (
             <div className="space-y-6">
