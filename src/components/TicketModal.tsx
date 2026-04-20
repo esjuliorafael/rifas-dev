@@ -3,6 +3,7 @@ import { useRaffles } from './RaffleContext';
 import { Ticket } from '../types';
 import { X, Check, Share2, Download, Trash2, ArrowLeft } from 'lucide-react';
 import { TicketReceipt } from './TicketReceipt';
+import { TicketReceiptMulti } from './TicketReceiptMulti';
 import { toJpeg } from 'html-to-image';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -10,52 +11,65 @@ import { motion, AnimatePresence } from 'motion/react';
 
 interface Props {
   raffleId: string;
-  ticket: Ticket;
+  ticket?: Ticket;
+  tickets?: Ticket[];
   onClose: () => void;
 }
 
-export function TicketModal({ raffleId, ticket, onClose }: Props) {
+export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   const { updateTicket, getRaffle } = useRaffles();
   const raffle = getRaffle(raffleId);
   const receiptRef = useRef<HTMLDivElement>(null);
 
-  const [name, setName] = useState(ticket.ownerName || '');
-  const [phone, setPhone] = useState(ticket.ownerPhone || '');
+  const targetTickets = tickets && tickets.length > 0 ? tickets : (ticket ? [ticket] : []);
+  const isMulti = targetTickets.length > 1;
+  const baseTicket = targetTickets[0];
+
+  const [name, setName] = useState(baseTicket?.ownerName || '');
+  const [phone, setPhone] = useState(baseTicket?.ownerPhone || '');
   const [viewState, setViewState] = useState<'details' | 'receipt'>('details');
   const [receiptMode, setReceiptMode] = useState<'reserved' | 'paid'>('reserved');
   const [isExporting, setIsExporting] = useState(false);
 
-  if (!raffle) return null;
+  if (!raffle || targetTickets.length === 0) return null;
 
   const handleReserve = (e: React.FormEvent) => {
     e.preventDefault();
-    updateTicket(raffleId, ticket.id, {
-      status: 'reserved',
-      ownerName: name,
-      ownerPhone: phone,
-      reservedAt: new Date().toISOString()
+    const reservedAt = new Date().toISOString();
+    targetTickets.forEach(t => {
+      updateTicket(raffleId, t.id, {
+        status: 'reserved',
+        ownerName: name,
+        ownerPhone: phone,
+        reservedAt
+      });
     });
     setReceiptMode('reserved');
     setViewState('receipt');
   };
 
   const handlePay = () => {
-    updateTicket(raffleId, ticket.id, {
-      status: 'paid',
-      paidAt: new Date().toISOString()
+    const paidAt = new Date().toISOString();
+    targetTickets.forEach(t => {
+      updateTicket(raffleId, t.id, {
+        status: 'paid',
+        paidAt
+      });
     });
     setReceiptMode('paid');
     setViewState('receipt');
   };
 
   const handleCancelReservation = () => {
-    if (confirm('¿Cancelar el apartado? El boleto quedará disponible.')) {
-      updateTicket(raffleId, ticket.id, {
-        status: 'available',
-        ownerName: '',
-        ownerPhone: '',
-        reservedAt: undefined,
-        paidAt: undefined
+    if (confirm(isMulti ? '¿Cancelar todos los apartados?' : '¿Cancelar el apartado? El boleto quedará disponible.')) {
+      targetTickets.forEach(t => {
+        updateTicket(raffleId, t.id, {
+          status: 'available',
+          ownerName: '',
+          ownerPhone: '',
+          reservedAt: undefined,
+          paidAt: undefined
+        });
       });
       onClose();
     }
@@ -63,9 +77,11 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
   
   const handleCancelPayment = () => {
     if (confirm('¿Cambiar de Pagado a Apartado?')) {
-      updateTicket(raffleId, ticket.id, {
-        status: 'reserved',
-        paidAt: undefined
+      targetTickets.forEach(t => {
+        updateTicket(raffleId, t.id, {
+          status: 'reserved',
+          paidAt: undefined
+        });
       });
     }
   };
@@ -80,7 +96,7 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
         pixelRatio: 3 
       });
       const link = document.createElement('a');
-      link.download = `ticket-${ticket.id}-${receiptMode}.jpeg`;
+      link.download = `ticket-${isMulti ? 'MULTI' : baseTicket.id}-${receiptMode}.jpeg`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -92,11 +108,18 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
   };
 
   const copyWhatsAppText = () => {
-    let text = `*Rifa: ${raffle.name}*\nBoleto: *${ticket.id}*\n`;
-    if (ticket.numbers.length > 1) {
-       text += `Oportunidades extra: ${ticket.numbers.slice(1).join(', ')}\n`;
+    let text = `*Rifa: ${raffle.name}*\n`;
+    if (isMulti) {
+      text += `Boletos: *${targetTickets.map(t => t.id).join(', ')}*\n`;
+    } else {
+      text += `Boleto: *${baseTicket.id}*\n`;
+      if (baseTicket.numbers.length > 1) {
+         text += `Oportunidades extra: ${baseTicket.numbers.slice(1).join(', ')}\n`;
+      }
     }
-    text += `Estado: *${receiptMode === 'paid' ? 'PAGADO ✅' : 'APARTADO ⏳'}*\nCosto: $${raffle.pricePerTicket}\nNombre: ${ticket.ownerName || name}`;
+    text += `Estado: *${receiptMode === 'paid' ? 'PAGADO ✅' : 'APARTADO ⏳'}*\n`;
+    text += `Costo: $${raffle.pricePerTicket * targetTickets.length}\n`;
+    text += `Nombre: ${baseTicket.ownerName || name}`;
     navigator.clipboard.writeText(text);
     alert('Texto copiado para WhatsApp');
   };
@@ -126,7 +149,11 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
                </button>
              )}
              <h3 className="font-bold text-gray-900 text-lg">
-                Boleto <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black">{ticket.id}</span>
+                {isMulti ? (
+                   `Apartar ${targetTickets.length} boletos`
+                ) : (
+                   <>Boleto <span className="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-black">{baseTicket.id}</span></>
+                )}
              </h3>
           </div>
           <button onClick={onClose} className="p-2 -mr-2 text-gray-400 hover:text-gray-900 hover:bg-gray-200 rounded-full transition-colors">
@@ -139,24 +166,38 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
           {viewState === 'details' ? (
             <div className="space-y-6">
               {/* Status Badge */}
-              <div className="flex justify-center">
-                 {ticket.status === 'available' && <span className="inline-block bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full font-bold text-sm">Disponible</span>}
-                 {ticket.status === 'reserved' && <span className="inline-block bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full font-bold text-sm">Apartado</span>}
-                 {ticket.status === 'paid' && <span className="inline-block bg-emerald-100 text-emerald-800 px-4 py-1.5 rounded-full font-bold text-sm">Pagado</span>}
-              </div>
-
-              {ticket.numbers.length > 1 && (
-                 <div className="bg-gray-100 px-4 py-3 rounded-xl border border-gray-200 shadow-sm text-center">
-                   <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Números de este boleto</p>
-                   <div className="flex flex-wrap gap-1.5 justify-center">
-                      {ticket.numbers.map((n, i) => (
-                         <span key={n} className={`${i === 0 ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'} border border-gray-200 px-2 py-1 rounded font-bold text-sm shadow-sm`}>{n}</span>
-                      ))}
-                   </div>
-                 </div>
+              {!isMulti && (
+                <div className="flex justify-center">
+                   {baseTicket.status === 'available' && <span className="inline-block bg-gray-100 text-gray-600 px-4 py-1.5 rounded-full font-bold text-sm">Disponible</span>}
+                   {baseTicket.status === 'reserved' && <span className="inline-block bg-amber-100 text-amber-800 px-4 py-1.5 rounded-full font-bold text-sm">Apartado</span>}
+                   {baseTicket.status === 'paid' && <span className="inline-block bg-emerald-100 text-emerald-800 px-4 py-1.5 rounded-full font-bold text-sm">Pagado</span>}
+                </div>
               )}
 
-              {ticket.status === 'available' ? (
+              {/* Multi-Chips view */}
+              {isMulti ? (
+                <div className="flex flex-wrap gap-2 justify-center mb-6">
+                  {targetTickets.map(t => (
+                    <div key={t.id} className="bg-gray-100 px-3 py-1 rounded-xl border border-gray-200 font-black text-gray-900 flex flex-col items-center">
+                      <span>{t.id}</span>
+                      {t.numbers.length > 1 && <span className="text-[10px] text-gray-500">{t.numbers.slice(1).join(' ')}</span>}
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                baseTicket.numbers.length > 1 && (
+                   <div className="bg-gray-100 px-4 py-3 rounded-xl border border-gray-200 shadow-sm text-center">
+                     <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-2">Números de este boleto</p>
+                     <div className="flex flex-wrap gap-1.5 justify-center">
+                        {baseTicket.numbers.map((n, i) => (
+                           <span key={n} className={`${i === 0 ? 'bg-gray-900 text-white' : 'bg-white text-gray-800'} border border-gray-200 px-2 py-1 rounded font-bold text-sm shadow-sm`}>{n}</span>
+                        ))}
+                     </div>
+                   </div>
+                )
+              )}
+
+              {targetTickets.every(t => t.status === 'available') ? (
                 <form onSubmit={handleReserve} className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-1">Nombre del comprador</label>
@@ -180,7 +221,7 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
                     type="submit" 
                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-white py-3 rounded-xl font-bold mt-4 shadow-sm active:translate-y-[1px] transition-all"
                   >
-                    Apartar Boleto
+                    Apartar {isMulti ? `${targetTickets.length} Boletos` : 'Boleto'}
                   </button>
                 </form>
               ) : (
@@ -188,25 +229,25 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
                    <div className="bg-gray-50 border border-gray-200 p-4 rounded-2xl space-y-3">
                      <div>
                        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Nombre</p>
-                       <p className="font-bold text-gray-900 text-lg">{ticket.ownerName}</p>
+                       <p className="font-bold text-gray-900 text-lg">{baseTicket.ownerName || name}</p>
                      </div>
-                     {ticket.ownerPhone && (
+                     {(baseTicket.ownerPhone || phone) && (
                        <div>
                          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Teléfono</p>
-                         <p className="font-medium text-gray-900">{ticket.ownerPhone}</p>
+                         <p className="font-medium text-gray-900">{baseTicket.ownerPhone || phone}</p>
                        </div>
                      )}
                      <div>
                        <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Fecha Apartado</p>
                        <p className="font-medium text-gray-900">
-                         {ticket.reservedAt ? format(new Date(ticket.reservedAt), "dd MMM yyyy, p", { locale: es }) : 'N/A'}
+                         {baseTicket.reservedAt ? format(new Date(baseTicket.reservedAt), "dd MMM yyyy, p", { locale: es }) : 'N/A'}
                        </p>
                      </div>
-                     {ticket.paidAt && (
+                     {baseTicket.paidAt && (
                        <div>
                          <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider mb-0.5">Fecha Pago</p>
                          <p className="font-medium text-gray-900">
-                           {format(new Date(ticket.paidAt), "dd MMM yyyy, p", { locale: es })}
+                           {format(new Date(baseTicket.paidAt), "dd MMM yyyy, p", { locale: es })}
                          </p>
                        </div>
                      )}
@@ -214,7 +255,7 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
 
                    {/* Action Buttons */}
                    <div className="flex flex-col gap-3">
-                     {ticket.status === 'reserved' && (
+                     {targetTickets.every(t => t.status === 'reserved') && (
                        <>
                          <button 
                            onClick={handlePay}
@@ -238,11 +279,11 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
                            className="w-full flex justify-center items-center gap-2 bg-white border-2 border-red-100 text-red-600 hover:border-red-200 hover:bg-red-50 py-3 px-4 rounded-xl font-bold transition-all mt-2"
                          >
                            <Trash2 size={18} />
-                           Cancelar Apartado
+                           {isMulti ? 'Cancelar Apartados' : 'Cancelar Apartado'}
                          </button>
                        </>
                      )}
-                     {ticket.status === 'paid' && (
+                     {targetTickets.every(t => t.status === 'paid') && (
                         <>
                           <button 
                            onClick={() => {
@@ -270,12 +311,21 @@ export function TicketModal({ raffleId, ticket, onClose }: Props) {
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-2xl flex justify-center border border-gray-200 overflow-hidden">
                  {/* Visual Ticket ref */}
-                 <TicketReceipt 
-                    ref={receiptRef} 
-                    ticket={ticket} 
-                    raffle={raffle} 
-                    mode={receiptMode}
-                 />
+                 {isMulti ? (
+                   <TicketReceiptMulti
+                     ref={receiptRef}
+                     tickets={targetTickets}
+                     raffle={raffle}
+                     mode={receiptMode}
+                   />
+                 ) : (
+                   <TicketReceipt 
+                     ref={receiptRef} 
+                     ticket={baseTicket} 
+                     raffle={raffle} 
+                     mode={receiptMode}
+                   />
+                 )}
               </div>
 
               <div className="grid grid-cols-2 gap-3 pt-2">

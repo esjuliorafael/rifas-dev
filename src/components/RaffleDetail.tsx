@@ -24,6 +24,9 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
   const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false);
   const [isColSheetOpen, setIsColSheetOpen] = useState(false);
   const [pendingFilter, setPendingFilter] = useState<'all' | 'available' | 'reserved' | 'paid'>(filter);
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [selectedMultiTickets, setSelectedMultiTickets] = useState<Ticket[]>([]);
+  const [isMultiModalOpen, setIsMultiModalOpen] = useState(false);
 
   if (!raffle) {
     return <div>Rifa no encontrada</div>;
@@ -142,7 +145,21 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
             <h2 className="text-3xl font-black text-gray-900">{raffle.name}</h2>
             {raffle.description && <p className="text-gray-500 mt-2 text-lg">{raffle.description}</p>}
           </div>
-          <div className="flex flex-row gap-2">
+          <div className="flex flex-row gap-2 flex-wrap sm:flex-nowrap">
+            <button
+              onClick={() => {
+                setIsSelectionMode(!isSelectionMode);
+                setSelectedMultiTickets([]);
+              }}
+              className={`flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl font-semibold transition-all whitespace-nowrap shadow-sm border ${
+                isSelectionMode 
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200' 
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Check size={18} className={isSelectionMode ? 'text-emerald-500' : 'text-gray-400'} />
+              <span className="hidden sm:inline">{isSelectionMode ? 'Cancelar Múltiple' : 'Selección Múltiple'}</span>
+            </button>
             <button
               onClick={() => setIsEditOpen(true)}
               className="flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl font-semibold transition-all whitespace-nowrap shadow-sm"
@@ -338,18 +355,36 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
         </div>
 
         <div className={`grid gap-2 md:gap-3 ${getGridClasses(currentCols)}`}>
-          {filteredTickets.map(ticket => (
+          {filteredTickets.map(ticket => {
+            const isSelected = selectedMultiTickets.some(t => t.id === ticket.id);
+            return (
             <button
               key={ticket.id}
-              onClick={() => setSelectedTicket(ticket)}
+              onClick={() => {
+                if (isSelectionMode) {
+                  if (isSelected) {
+                    setSelectedMultiTickets(selectedMultiTickets.filter(t => t.id !== ticket.id));
+                  } else {
+                    setSelectedMultiTickets([...selectedMultiTickets, ticket]);
+                  }
+                } else {
+                  setSelectedTicket(ticket);
+                }
+              }}
               className={`
                 aspect-square rounded-xl flex flex-col justify-between border-2 border-b-4
-                transition-all shadow-sm active:translate-y-[2px] active:border-b-2 overflow-hidden
+                transition-all shadow-sm active:translate-y-[2px] active:border-b-2 overflow-hidden relative
                 ${getStatusColor(ticket.status)}
                 ${ticketStyles.padding}
+                ${isSelectionMode && isSelected ? 'ring-4 ring-emerald-500 ring-offset-2' : ''}
               `}
               title={ticket.status !== 'available' ? ticket.ownerName : 'Disponible'}
             >
+              {isSelectionMode && (
+                 <div className={`absolute -top-1 -right-1 w-6 h-6 rounded-bl-xl rounded-tr-xl flex items-center justify-center transition-colors ${isSelected ? 'bg-emerald-500 text-white' : 'bg-black/10 text-transparent'}`}>
+                   <Check size={14} strokeWidth={3} />
+                 </div>
+              )}
               <div className="flex justify-between items-start w-full">
                 <span className={`font-black leading-none ${ticketStyles.idSize}`}>{ticket.id}</span>
                 <span className="shrink-0 opacity-80">
@@ -371,7 +406,8 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
                  </div>
               )}
             </button>
-          ))}
+            );
+          })}
         </div>
         
         {filteredTickets.length === 0 && (
@@ -381,11 +417,23 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
         )}
       </div>
 
-      {selectedTicket && (
+      {selectedTicket && !isSelectionMode && (
         <TicketModal 
           raffleId={raffleId}
           ticket={selectedTicket}
           onClose={() => setSelectedTicket(null)}
+        />
+      )}
+
+      {isMultiModalOpen && (
+        <TicketModal 
+          raffleId={raffleId}
+          tickets={selectedMultiTickets}
+          onClose={() => {
+            setIsMultiModalOpen(false);
+            setSelectedMultiTickets([]);
+            setIsSelectionMode(false);
+          }}
         />
       )}
 
@@ -398,6 +446,28 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
 
       {/* Filter Bottom Sheet */}
       <AnimatePresence>
+        {isSelectionMode && selectedMultiTickets.length > 0 && (
+          <motion.div
+            initial={{ y: '100%' }}
+            animate={{ y: 0 }}
+            exit={{ y: '100%' }}
+            transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+            className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900 text-white rounded-t-2xl p-4 shadow-2xl flex justify-between items-center sm:px-6"
+            style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+          >
+             <div className="font-bold flex items-center gap-2">
+                <span className="text-xl bg-gray-800 px-3 py-1 rounded-lg">{selectedMultiTickets.length}</span>
+                <span className="text-gray-300 text-sm">seleccionados</span>
+             </div>
+             <button 
+                onClick={() => setIsMultiModalOpen(true)}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-2.5 px-6 rounded-xl shadow-md transition-colors"
+             >
+                Procesar
+             </button>
+          </motion.div>
+        )}
+        
         {isFilterSheetOpen && (
           <div className="fixed inset-0 z-50 flex items-end justify-center">
             <motion.div
