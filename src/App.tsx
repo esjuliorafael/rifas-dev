@@ -6,6 +6,7 @@ import { Dashboard } from './components/Dashboard';
 import { RaffleDetail } from './components/RaffleDetail';
 import { TandaDetail } from './components/TandaDetail';
 import { SettingsView } from './components/SettingsView';
+import { ToastContainer } from './components/ToastContainer';
 import { motion, AnimatePresence } from 'motion/react';
 import { Settings as SettingsIcon } from 'lucide-react';
 
@@ -21,6 +22,7 @@ export default function App() {
   };
 
   return (
+    <>
     <SettingsProvider>
       <RaffleProvider>
         <TandaProvider>
@@ -106,5 +108,7 @@ export default function App() {
         </TandaProvider>
       </RaffleProvider>
     </SettingsProvider>
+    <ToastContainer />
+    </>
   );
 }

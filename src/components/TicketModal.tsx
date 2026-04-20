@@ -4,6 +4,7 @@ import { Ticket } from '../types';
 import { X, Check, Share2, Download, Trash2, ArrowLeft, RotateCcw } from 'lucide-react';
 import { TicketReceipt } from './TicketReceipt';
 import { TicketReceiptMulti } from './TicketReceiptMulti';
+import { toast } from '../hooks/useToast';
 import { toJpeg } from 'html-to-image';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -104,6 +105,8 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   };
 
   const executeCancelReservation = () => {
+    const count = targetTickets.length;
+    const name = baseTicket.ownerName;
     targetTickets.forEach(t => {
       updateTicket(raffleId, t.id, {
         status: 'available',
@@ -113,6 +116,12 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
         paidAt: undefined
       });
     });
+    toast(
+      count > 1
+        ? `${count} apartados cancelados`
+        : `Apartado de ${name} cancelado`,
+      'error'
+    );
     onClose();
   };
   
@@ -121,13 +130,21 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   };
 
   const executeUnpay = () => {
+    const count = targetTickets.length;
     targetTickets.forEach(t => {
       updateTicket(raffleId, t.id, {
         status: 'reserved',
         paidAt: undefined
       });
     });
+    toast(
+      count > 1
+        ? `${count} boletos volvieron a Apartado`
+        : `Boleto ${baseTicket.id} volvió a Apartado`,
+      'warning'
+    );
     setShowUnpayConfirm(false);
+    onClose();
   };
 
   const exportReceipt = async () => {
