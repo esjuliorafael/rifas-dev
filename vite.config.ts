@@ -6,17 +6,22 @@ import { defineConfig, loadEnv } from 'vite';
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
   
-  const supabaseUrl = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
-  const supabaseKey = env.VITE_SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
+  // Fusionar variables de .env y de process.env (Cloudflare)
+  const allEnv = { ...process.env, ...env };
 
-  console.log('--- DIAGNÃSTICO DE ENTORNO ---');
-  console.log('URL detectada:', supabaseUrl ? 'SÃ (' + supabaseUrl.substring(0, 10) + '...)' : 'NO');
-  console.log('Key detectada:', supabaseKey ? 'SÃ (Comienza con ' + supabaseKey.substring(0, 5) + '...)' : 'NO');
-  console.log('------------------------------');
+  console.log('--- DEPURACIÃN DE VARIABLES VITE_ ---');
+  Object.keys(allEnv).forEach(key => {
+    if (key.startsWith('VITE_')) {
+      console.log(`Detectada: ${key} (Longitud: ${allEnv[key]?.length})`);
+    }
+  });
+  console.log('---------------------------------------');
 
-  // Si falta la llave, lanzamos un error para detener el build y que Cloudflare nos avise
+  const supabaseUrl = allEnv.VITE_SUPABASE_URL;
+  const supabaseKey = allEnv.VITE_SUPABASE_ANON_KEY;
+
   if (!supabaseKey && mode === 'production') {
-    throw new Error('FATAL: VITE_SUPABASE_ANON_KEY no estÃ¡ definida en el entorno de Cloudflare.');
+    throw new Error('FATAL: VITE_SUPABASE_ANON_KEY no detectada. Revisa los nombres arriba.');
   }
 
   return {
