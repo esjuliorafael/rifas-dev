@@ -26,7 +26,7 @@ export interface Raffle {
   drawDate: string;
 }
 
-export interface TandaParticipant {
+export interface LayawayParticipant {
   id: string; // The slot number (e.g., '1', '2')
   name: string;
   phone: string;
@@ -35,7 +35,7 @@ export interface TandaParticipant {
   payments: (string | null)[]; // Array of ISO payment dates or null, length = numberOfWeeks
 }
 
-export interface Tanda {
+export interface Layaway {
   id: string;
   name: string;
   description: string;
@@ -45,5 +45,5 @@ export interface Tanda {
   startDate: string;
   createdAt: string;
   themeColor?: string;
-  participants: Record<string, TandaParticipant>;
+  participants: Record<string, LayawayParticipant>;
 }

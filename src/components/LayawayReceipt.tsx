@@ -1,24 +1,24 @@
 import React, { forwardRef } from 'react';
-import { Tanda, TandaParticipant } from '../types';
+import { Layaway, LayawayParticipant } from '../types';
 import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 interface Props {
-  tanda: Tanda;
-  participant: TandaParticipant;
+  layaway: Layaway;
+  participant: LayawayParticipant;
 }
 
-export const TandaReceipt = forwardRef<HTMLDivElement, Props>(({ tanda, participant }, ref) => {
+export const LayawayReceipt = forwardRef<HTMLDivElement, Props>(({ layaway, participant }, ref) => {
   const getWeekDate = (weekNum: number) => {
-    if (!tanda.startDate) return null;
-    const [y, m, d] = tanda.startDate.split('-');
+    if (!layaway.startDate) return null;
+    const [y, m, d] = layaway.startDate.split('-');
     const date = new Date(Number(y), Number(m)-1, Number(d));
     const targetDate = addDays(date, (weekNum - 1) * 7);
     return targetDate;
   };
 
   const paidCount = participant.payments.filter(p => p !== null).length;
-  const isComplete = paidCount === tanda.numberOfWeeks;
+  const isComplete = paidCount === layaway.numberOfWeeks;
 
   return (
     <div 
@@ -27,8 +27,8 @@ export const TandaReceipt = forwardRef<HTMLDivElement, Props>(({ tanda, particip
     >
       {/* Receipt Header */}
       <div className={`p-5 text-center text-white ${isComplete ? 'bg-emerald-600' : 'bg-blue-600'}`}>
-         <h2 className="text-xl font-black tracking-tighter leading-none mb-1 uppercase">{tanda.name}</h2>
-         <p className="text-xs font-semibold opacity-90">{tanda.description}</p>
+         <h2 className="text-xl font-black tracking-tighter leading-none mb-1 uppercase">{layaway.name}</h2>
+         <p className="text-xs font-semibold opacity-90">{layaway.description}</p>
       </div>
       
       {/* Jagged edge simulation */}
@@ -52,12 +52,12 @@ export const TandaReceipt = forwardRef<HTMLDivElement, Props>(({ tanda, particip
          <div className="mt-6 flex justify-between items-center pb-3 border-b border-gray-100 px-2 lg:px-4">
             <div className="text-left">
                <p className="text-[9px] uppercase font-bold text-gray-400">Pago Semanal</p>
-               <p className="font-black text-gray-900">${tanda.pricePerWeek}</p>
+               <p className="font-black text-gray-900">${layaway.pricePerWeek}</p>
             </div>
             <div className="text-right">
                <p className="text-[9px] uppercase font-bold text-gray-400">Entrega Estimada</p>
                <p className="font-bold text-gray-900 text-xs mt-0.5 whitespace-nowrap">
-                  {getWeekDate(tanda.numberOfWeeks) ? format(getWeekDate(tanda.numberOfWeeks)!, "dd MMM, yyyy", { locale: es }) : 'N/A'}
+                  {getWeekDate(layaway.numberOfWeeks) ? format(getWeekDate(layaway.numberOfWeeks)!, "dd MMM, yyyy", { locale: es }) : 'N/A'}
                </p>
             </div>
          </div>
@@ -92,7 +92,7 @@ export const TandaReceipt = forwardRef<HTMLDivElement, Props>(({ tanda, particip
                </div>
             ) : (
                <div className="bg-blue-50 text-blue-800 py-2 rounded-lg font-black uppercase text-xs border border-blue-100">
-                 Avance: {paidCount} de {tanda.numberOfWeeks} semanas
+                 Avance: {paidCount} de {layaway.numberOfWeeks} semanas
                </div>
             )}
          </div>

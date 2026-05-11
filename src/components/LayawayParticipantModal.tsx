@@ -1,22 +1,22 @@
 import React, { useState, useRef } from 'react';
-import { useTandas } from './TandaContext';
-import { TandaParticipant } from '../types';
+import { useLayaways } from './LayawayContext';
+import { LayawayParticipant } from '../types';
 import { X, Share2, Download, Trash2, CheckCircle2, Circle } from 'lucide-react';
 import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { toJpeg } from 'html-to-image';
-import { TandaReceipt } from './TandaReceipt';
+import { LayawayReceipt } from './LayawayReceipt';
 import { motion, AnimatePresence } from 'motion/react';
 
 interface Props {
-  tandaId: string;
-  participant: TandaParticipant;
+  layawayId: string;
+  participant: LayawayParticipant;
   onClose: () => void;
 }
 
-export function TandaParticipantModal({ tandaId, participant, onClose }: Props) {
-  const { updateParticipant, getTanda } = useTandas();
-  const tanda = getTanda(tandaId);
+export function LayawayParticipantModal({ layawayId, participant, onClose }: Props) {
+  const { updateParticipant, getLayaway } = useLayaways();
+  const layaway = getLayaway(layawayId);
   const receiptRef = useRef<HTMLDivElement>(null);
 
   const [name, setName] = useState(participant.name || '');
@@ -24,11 +24,11 @@ export function TandaParticipantModal({ tandaId, participant, onClose }: Props) 
   const [viewState, setViewState] = useState<'details' | 'receipt'>('details');
   const [isExporting, setIsExporting] = useState(false);
 
-  if (!tanda) return null;
+  if (!layaway) return null;
 
   const handleReserve = (e: React.FormEvent) => {
     e.preventDefault();
-    updateParticipant(tandaId, participant.id, {
+    updateParticipant(layawayId, participant.id, {
       status: 'reserved',
       name,
       phone,
@@ -43,17 +43,17 @@ export function TandaParticipantModal({ tandaId, participant, onClose }: Props) 
     } else {
       newPayments[weekIndex] = new Date().toISOString(); // Mark paid
     }
-    updateParticipant(tandaId, participant.id, { payments: newPayments });
+    updateParticipant(layawayId, participant.id, { payments: newPayments });
   };
 
   const handleCancelReservation = () => {
     if (confirm('¿Cancelar este participante? El lugar quedará disponible y perderás todo el historial de pagos.')) {
-      updateParticipant(tandaId, participant.id, {
+      updateParticipant(layawayId, participant.id, {
         status: 'available',
         name: '',
         phone: '',
         reservedAt: undefined,
-        payments: Array(tanda.numberOfWeeks).fill(null)
+        payments: Array(layaway.numberOfWeeks).fill(null)
       });
       onClose();
     }
@@ -66,7 +66,7 @@ export function TandaParticipantModal({ tandaId, participant, onClose }: Props) 
       await new Promise(res => setTimeout(res, 100)); // wait for render
       const dataUrl = await toJpeg(receiptRef.current, { quality: 0.95 });
       const link = document.createElement('a');
-      link.download = `tanda-${participant.id}-${name.toLowerCase().replace(/\s+/g, '-')}.jpeg`;
+      link.download = `layaway-${participant.id}-${name.toLowerCase().replace(/\s+/g, '-')}.jpeg`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -79,11 +79,11 @@ export function TandaParticipantModal({ tandaId, participant, onClose }: Props) 
 
   const copyWhatsAppText = () => {
     const paidCount = participant.payments.filter(p => p !== null).length;
-    let text = `*Tanda: ${tanda.name}*\nLugar: *#${participant.id}*\nParticipante: *${participant.name}*\n`;
-    text += `Avance: *${paidCount} de ${tanda.numberOfWeeks} semanas pagadas*\n`;
-    text += `Semanalidad: $${tanda.pricePerWeek}\n`;
+    let text = `*Tanda: ${layaway.name}*\nLugar: *#${participant.id}*\nParticipante: *${participant.name}*\n`;
+    text += `Avance: *${paidCount} de ${layaway.numberOfWeeks} semanas pagadas*\n`;
+    text += `Semanalidad: $${layaway.pricePerWeek}\n`;
     
-    if (paidCount === tanda.numberOfWeeks) {
+    if (paidCount === layaway.numberOfWeeks) {
        text += `\n✅ ¡Tanda Completada!`;
     }
     navigator.clipboard.writeText(text);
@@ -92,8 +92,8 @@ export function TandaParticipantModal({ tandaId, participant, onClose }: Props) 
 
   // Helper to calculate the date for a specific week based on start date
   const getWeekDate = (weekNum: number) => {
-    if (!tanda.startDate) return null;
-    const [y, m, d] = tanda.startDate.split('-');
+    if (!layaway.startDate) return null;
+    const [y, m, d] = layaway.startDate.split('-');
     const date = new Date(Number(y), Number(m)-1, Number(d));
     const targetDate = addDays(date, (weekNum - 1) * 7);
     return targetDate;
@@ -209,7 +209,7 @@ export function TandaParticipantModal({ tandaId, participant, onClose }: Props) 
                                </div>
                                
                                <div className="flex items-center gap-2">
-                                 <span className={`font-black ${isPaid ? 'text-emerald-700' : 'text-gray-900'}`}>${tanda.pricePerWeek}</span>
+                                 <span className={`font-black ${isPaid ? 'text-emerald-700' : 'text-gray-900'}`}>${layaway.pricePerWeek}</span>
                                  {isPaid ? <CheckCircle2 className="text-emerald-500" size={24} /> : <Circle className="text-gray-300" size={24} />}
                                </div>
                              </button>
@@ -231,10 +231,10 @@ export function TandaParticipantModal({ tandaId, participant, onClose }: Props) 
             ) : (
               <div className="space-y-4">
                 <div className="bg-gray-50 p-4 rounded-2xl flex justify-center border border-gray-200 overflow-hidden">
-                   <TandaReceipt 
+                   <LayawayReceipt 
                       ref={receiptRef} 
                       participant={participant} 
-                      tanda={tanda} 
+                      layaway={layaway} 
                    />
                 </div>
 

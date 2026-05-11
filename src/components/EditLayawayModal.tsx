@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Edit, X } from 'lucide-react';
-import { Tanda, TandaParticipant } from '../types';
-import { useTandas } from './TandaContext';
+import { Layaway, LayawayParticipant } from '../types';
+import { useLayaways } from './LayawayContext';
 import { motion, AnimatePresence } from 'motion/react';
 
-export function EditTandaModal({ tanda, onClose }: { tanda: Tanda, onClose: () => void }) {
-  const { updateTanda } = useTandas();
-  const [name, setName] = useState(tanda.name);
-  const [description, setDescription] = useState(tanda.description || '');
-  const [pricePerWeek, setPricePerWeek] = useState(tanda.pricePerWeek);
-  const [numberOfWeeks, setNumberOfWeeks] = useState(tanda.numberOfWeeks);
-  const [numberOfParticipants, setNumberOfParticipants] = useState(tanda.numberOfParticipants);
-  const [themeColor, setThemeColor] = useState(tanda.themeColor || '');
+export function EditLayawayModal({ layaway, onClose }: { layaway: Layaway, onClose: () => void }) {
+  const { updateLayaway } = useLayaways();
+  const [name, setName] = useState(layaway.name);
+  const [description, setDescription] = useState(layaway.description || '');
+  const [pricePerWeek, setPricePerWeek] = useState(layaway.pricePerWeek);
+  const [numberOfWeeks, setNumberOfWeeks] = useState(layaway.numberOfWeeks);
+  const [numberOfParticipants, setNumberOfParticipants] = useState(layaway.numberOfParticipants);
+  const [themeColor, setThemeColor] = useState(layaway.themeColor || '');
 
   useEffect(() => {
     const handleEsc = (e: KeyboardEvent) => {
@@ -25,11 +25,11 @@ export function EditTandaModal({ tanda, onClose }: { tanda: Tanda, onClose: () =
     e.preventDefault();
     
     // Process participants logic
-    const newParticipants: Record<string, TandaParticipant> = {};
+    const newParticipants: Record<string, LayawayParticipant> = {};
     
     for (let i = 1; i <= numberOfParticipants; i++) {
         const id = String(i);
-        const existing = tanda.participants[id];
+        const existing = layaway.participants[id];
         
         let payments = existing ? [...existing.payments] : [];
 
@@ -46,7 +46,7 @@ export function EditTandaModal({ tanda, onClose }: { tanda: Tanda, onClose: () =
         }
     }
 
-    updateTanda(tanda.id, {
+    updateLayaway(layaway.id, {
       name,
       description,
       pricePerWeek,

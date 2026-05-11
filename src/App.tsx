@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { RaffleProvider } from './components/RaffleContext';
-import { TandaProvider } from './components/TandaContext';
+import { LayawayProvider } from './components/LayawayContext';
 import { SettingsProvider } from './components/SettingsContext';
 import { Dashboard } from './components/Dashboard';
 import { RaffleDetail } from './components/RaffleDetail';
-import { TandaDetail } from './components/TandaDetail';
+import { LayawayDetail } from './components/LayawayDetail';
 import { SettingsView } from './components/SettingsView';
 import { ToastContainer } from './components/ToastContainer';
 import { motion, AnimatePresence } from 'motion/react';
@@ -12,12 +12,12 @@ import { Settings as SettingsIcon } from 'lucide-react';
 
 export default function App() {
   const [currentRaffleId, setCurrentRaffleId] = useState<string | null>(null);
-  const [currentTandaId, setCurrentTandaId] = useState<string | null>(null);
+  const [currentLayawayId, setCurrentLayawayId] = useState<string | null>(null);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const goHome = () => {
     setCurrentRaffleId(null);
-    setCurrentTandaId(null);
+    setCurrentLayawayId(null);
     setIsSettingsOpen(false);
   };
 
@@ -25,11 +25,11 @@ export default function App() {
     <>
     <SettingsProvider>
       <RaffleProvider>
-        <TandaProvider>
+        <LayawayProvider>
           <div className="min-h-screen bg-gray-50 text-gray-900 font-sans overflow-x-hidden">
             <header className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-30">
               <div className="max-w-7xl mx-auto px-4 h-16 flex justify-between items-center relative">
-                {(currentRaffleId || currentTandaId || isSettingsOpen) && (
+                {(currentRaffleId || currentLayawayId || isSettingsOpen) && (
                   <button 
                     onClick={goHome}
                     className="absolute left-4 flex items-center justify-center p-2 text-gray-600 hover:text-gray-900 transition-colors"
@@ -47,7 +47,7 @@ export default function App() {
                   Rifas Pro
                 </h1>
                 
-                {!isSettingsOpen && !currentRaffleId && !currentTandaId && (
+                {!isSettingsOpen && !currentRaffleId && !currentLayawayId && (
                   <button 
                     onClick={() => setIsSettingsOpen(true)}
                     className="absolute right-4 flex items-center justify-center p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors"
@@ -81,7 +81,7 @@ export default function App() {
                   >
                     <RaffleDetail raffleId={currentRaffleId} />
                   </motion.div>
-                ) : currentTandaId ? (
+                ) : currentLayawayId ? (
                   <motion.div 
                     key="tanda-detail"
                     initial={{ opacity: 0, x: 20 }}
@@ -89,7 +89,7 @@ export default function App() {
                     exit={{ opacity: 0, x: -20 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                   >
-                    <TandaDetail tandaId={currentTandaId} onClose={goHome} />
+                    <LayawayDetail layawayId={currentLayawayId} onClose={goHome} />
                   </motion.div>
                 ) : (
                   <motion.div 
@@ -99,13 +99,13 @@ export default function App() {
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ duration: 0.2, ease: 'easeOut' }}
                   >
-                    <Dashboard onSelectRaffle={setCurrentRaffleId} onSelectTanda={setCurrentTandaId} />
+                    <Dashboard onSelectRaffle={setCurrentRaffleId} onSelectLayaway={setCurrentLayawayId} />
                   </motion.div>
                 )}
               </AnimatePresence>
             </main>
           </div>
-        </TandaProvider>
+        </LayawayProvider>
       </RaffleProvider>
     </SettingsProvider>
     <ToastContainer />

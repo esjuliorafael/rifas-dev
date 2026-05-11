@@ -17,7 +17,7 @@ interface Props {
   onClose: () => void;
 }
 
-export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
+export const TicketModal: React.FC<Props> = ({ raffleId, ticket, tickets, onClose }) => {
   const { updateTicket, getRaffle } = useRaffles();
   const raffle = getRaffle(raffleId);
   const receiptRef = useRef<HTMLDivElement>(null);
@@ -99,13 +99,6 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
     const allTickets = Object.values(raffle.tickets) as Ticket[];
     const paidObjs = allTickets.filter(t => ids.includes(t.id)).map(t => ({...t, status: 'paid' as const, paidAt}));
     setActuallyPaidTickets(paidObjs);
-
-    toast(
-      ids.length > 1
-        ? `${ids.length} boletos registrados como pagados ✓`
-        : `Boleto ${ids[0]} registrado como pagado ✓`,
-      'success'
-    );
 
     setReceiptMode('paid');
     setViewState('receipt');
@@ -199,17 +192,21 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
   };
 
   return (
-    <AnimatePresence onExitComplete={onClose}>
+    <AnimatePresence mode="wait" onExitComplete={onClose}>
       {isVisible && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 perspective-[1000px]">
           <motion.div 
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3, ease: 'easeInOut' }}
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={handleClose}
           />
           <motion.div 
-            initial={{ y: '100%', opacity: 1 }} animate={{ y: 0, opacity: 1 }} exit={{ y: '100%', opacity: 1 }}
-            transition={{ type: "spring", bounce: 0, duration: 0.4 }}
+            initial={{ y: '100%' }}
+            animate={{ y: 0, transition: { type: 'spring', bounce: 0, duration: 0.4 } }}
+            exit={{ y: '100%', transition: { type: 'spring', bounce: 0, duration: 0.35 } }}
             className="bg-white shadow-2xl w-full sm:max-w-md rounded-t-3xl sm:rounded-3xl flex flex-col relative z-10 max-h-[95vh] sm:max-h-[90vh]"
           >
             {/* Drag Handle for Mobile */}
@@ -502,7 +499,7 @@ export function TicketModal({ raffleId, ticket, tickets, onClose }: Props) {
                            Gestiona cada boleto individualmente.
                          </p>
                          <button
-                           onClick={onClose}
+                           onClick={handleClose}
                            className="text-sm font-bold text-amber-700 underline underline-offset-2"
                          >
                            Cerrar

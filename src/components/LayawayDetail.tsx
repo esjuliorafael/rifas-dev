@@ -1,31 +1,31 @@
 import React, { useRef, useState } from 'react';
-import { useTandas } from './TandaContext';
+import { useLayaways } from './LayawayContext';
 import { useSettings } from './SettingsContext';
 import { Download, Users, ArrowLeft, CheckCircle2, CircleDashed, Circle, Edit } from 'lucide-react';
 import { toJpeg } from 'html-to-image';
-import { TandaParticipant } from '../types';
-import { TandaParticipantModal } from './TandaParticipantModal';
-import { EditTandaModal } from './EditTandaModal';
+import { LayawayParticipant } from '../types';
+import { LayawayParticipantModal } from './LayawayParticipantModal';
+import { EditLayawayModal } from './EditLayawayModal';
 import { addDays, format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { injectThemeColorIntoSvg } from '../utils/svgColor';
 import { blendWithWhite } from '../utils/color';
 
-export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: () => void }) {
-  const { getTanda } = useTandas();
+export function LayawayDetail({ layawayId, onClose }: { layawayId: string, onClose: () => void }) {
+  const { getLayaway } = useLayaways();
   const { settings } = useSettings();
-  const tanda = getTanda(tandaId);
+  const layaway = getLayaway(layawayId);
   const gridRef = useRef<HTMLDivElement>(null);
   
-  const [selectedParticipant, setSelectedParticipant] = useState<TandaParticipant | null>(null);
+  const [selectedParticipant, setSelectedParticipant] = useState<LayawayParticipant | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
-  if (!tanda) return null;
+  if (!layaway) return null;
 
   const getWeekDate = (weekNum: number) => {
-    if (!tanda.startDate) return null;
-    const [y, m, d] = tanda.startDate.split('-');
+    if (!layaway.startDate) return null;
+    const [y, m, d] = layaway.startDate.split('-');
     const date = new Date(Number(y), Number(m)-1, Number(d));
     const targetDate = addDays(date, (weekNum - 1) * 7);
     return targetDate;
@@ -38,10 +38,10 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
       await new Promise(res => setTimeout(res, 100));
       const dataUrl = await toJpeg(gridRef.current, { 
         quality: 0.95,
-        backgroundColor: tanda.themeColor ? blendWithWhite(tanda.themeColor, 0.1) : '#ffffff'
+        backgroundColor: layaway.themeColor ? blendWithWhite(layaway.themeColor, 0.1) : '#ffffff'
       });
       const link = document.createElement('a');
-      link.download = `tanda-${tanda.name.toLowerCase().replace(/\s+/g, '-')}.jpeg`;
+      link.download = `layaway-${layaway.name.toLowerCase().replace(/\s+/g, '-')}.jpeg`;
       link.href = dataUrl;
       link.click();
     } catch (err) {
@@ -52,8 +52,8 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
     }
   };
 
-  const participants = Object.values(tanda.participants);
-  const weeksArray = Array.from({ length: tanda.numberOfWeeks }, (_, i) => i + 1);
+  const participants = Object.values(layaway.participants) as LayawayParticipant[];
+  const weeksArray = Array.from({ length: layaway.numberOfWeeks }, (_, i) => i + 1);
 
   return (
     <div className="space-y-6">
@@ -65,8 +65,8 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
           >
             <ArrowLeft size={16} /> Volver a Tandas
           </button>
-          <h2 className="text-3xl font-black text-gray-900">{tanda.name}</h2>
-          <p className="text-gray-500 mt-1">{tanda.description}</p>
+          <h2 className="text-3xl font-black text-gray-900">{layaway.name}</h2>
+          <p className="text-gray-500 mt-1">{layaway.description}</p>
         </div>
         <div className="flex flex-row gap-2">
           <button
@@ -90,19 +90,19 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
         <div className="p-4 rounded-xl bg-gray-50 border border-gray-100">
            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Participantes</p>
-           <p className="text-2xl font-black text-gray-900">{tanda.numberOfParticipants}</p>
+           <p className="text-2xl font-black text-gray-900">{layaway.numberOfParticipants}</p>
         </div>
         <div className="p-4 rounded-xl bg-blue-50 border border-blue-100">
            <p className="text-xs font-semibold text-blue-800 uppercase tracking-wider mb-1">Semanas</p>
-           <p className="text-2xl font-black text-blue-600">{tanda.numberOfWeeks}</p>
+           <p className="text-2xl font-black text-blue-600">{layaway.numberOfWeeks}</p>
         </div>
         <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-100">
            <p className="text-xs font-semibold text-emerald-800 uppercase tracking-wider mb-1">Pago Semanal</p>
-           <p className="text-2xl font-black text-emerald-600">${tanda.pricePerWeek}</p>
+           <p className="text-2xl font-black text-emerald-600">${layaway.pricePerWeek}</p>
         </div>
         <div className="p-4 rounded-xl bg-white border border-gray-200 shadow-sm">
            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">Costo Total</p>
-           <p className="text-2xl font-black text-gray-900">${tanda.pricePerWeek * tanda.numberOfWeeks}</p>
+           <p className="text-2xl font-black text-gray-900">${layaway.pricePerWeek * layaway.numberOfWeeks}</p>
         </div>
       </div>
 
@@ -111,16 +111,16 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
         <div 
           ref={gridRef} 
           className="min-w-max p-6 rounded-3xl border border-gray-200"
-          style={tanda.themeColor ? { backgroundColor: `${tanda.themeColor}1A` } : { backgroundColor: '#ffffff' }}
+          style={layaway.themeColor ? { backgroundColor: `${layaway.themeColor}1A` } : { backgroundColor: '#ffffff' }}
         >
           <div 
             className="flex flex-row items-center gap-4 mb-6 pb-4 border-b"
-            style={{ borderBottomColor: tanda.themeColor ? `${tanda.themeColor}4D` : '#e5e7eb' }}
+            style={{ borderBottomColor: layaway.themeColor ? `${layaway.themeColor}4D` : '#e5e7eb' }}
           >
             {settings.logoUrl && (
               <div className="flex flex-col items-center justify-center shrink-0">
                 <img 
-                  src={tanda.themeColor ? injectThemeColorIntoSvg(settings.logoUrl, tanda.themeColor) : settings.logoUrl} 
+                  src={layaway.themeColor ? injectThemeColorIntoSvg(settings.logoUrl, layaway.themeColor) : settings.logoUrl} 
                   alt="Logo" 
                   className="h-40 w-40 object-contain" 
                 />
@@ -130,24 +130,24 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
             <div className="flex-1 min-w-0 text-left">
               <h3 
                 className="text-2xl font-black uppercase tracking-tight truncate"
-                style={tanda.themeColor ? { color: tanda.themeColor } : { color: '#111827' }}
+                style={layaway.themeColor ? { color: layaway.themeColor } : { color: '#111827' }}
               >
-                {tanda.name}
+                {layaway.name}
               </h3>
               <p className="text-gray-500 text-base font-bold mt-1">
-                {tanda.description && <span className="block line-clamp-2">{tanda.description}</span>}
+                {layaway.description && <span className="block line-clamp-2">{layaway.description}</span>}
                 <span className="inline-block mt-1 font-semibold bg-gray-100/50 border border-gray-200 px-2.5 py-0.5 rounded-md text-xs text-gray-600">
-                  {tanda.numberOfWeeks} Semanas
+                  {layaway.numberOfWeeks} Semanas
                 </span>
               </p>
             </div>
 
             <div 
               className="shrink-0 flex flex-col items-center justify-center py-4 px-4 rounded-xl shadow-sm"
-              style={{ backgroundColor: tanda.themeColor || '#2563eb' }}
+              style={{ backgroundColor: layaway.themeColor || '#2563eb' }}
             >
               <span className="text-base font-bold text-white tracking-wider uppercase mb-0.5 leading-none">Pago Semanal</span>
-              <span className="text-[40px] font-black text-white leading-[40px]">${tanda.pricePerWeek}</span>
+              <span className="text-[40px] font-black text-white leading-[40px]">${layaway.pricePerWeek}</span>
               <span className="text-xs font-semibold text-white/70 mt-0.5 uppercase tracking-wider">MXN</span>
             </div>
           </div>
@@ -156,7 +156,7 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
             {/* Encabezados alineados con la cuadrícula */}
             <div 
               className="grid items-end gap-2 px-3 mb-4 border-b border-gray-200 pb-3"
-              style={{ gridTemplateColumns: `minmax(240px, 1fr) repeat(${tanda.numberOfWeeks}, 64px)` }}
+              style={{ gridTemplateColumns: `minmax(240px, 1fr) repeat(${layaway.numberOfWeeks}, 64px)` }}
             >
               <div className="text-gray-500 text-xs uppercase font-bold tracking-wider pl-2">Lugar y Participante</div>
               {weeksArray.map(w => {
@@ -183,7 +183,7 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
                       w-full text-left border hover:shadow-md rounded-2xl p-2.5 sm:p-3 transition-all grid items-center gap-2 group
                       ${isAvailable ? 'bg-white border-dashed border-gray-300 hover:border-gray-400' : 'bg-white border-2 border-gray-100 hover:border-blue-300'}
                     `}
-                    style={{ gridTemplateColumns: `minmax(240px, 1fr) repeat(${tanda.numberOfWeeks}, 64px)` }}
+                    style={{ gridTemplateColumns: `minmax(240px, 1fr) repeat(${layaway.numberOfWeeks}, 64px)` }}
                   >
                     <div className="flex items-center gap-3 pr-4 border-r border-gray-100">
                       <div className={`w-10 h-10 shrink-0 rounded-xl flex items-center justify-center font-black text-base
@@ -222,16 +222,16 @@ export function TandaDetail({ tandaId, onClose }: { tandaId: string, onClose: ()
       </div>
 
       {selectedParticipant && (
-        <TandaParticipantModal 
-          tandaId={tandaId}
+        <LayawayParticipantModal 
+          layawayId={layawayId}
           participant={selectedParticipant}
           onClose={() => setSelectedParticipant(null)}
         />
       )}
 
       {isEditOpen && (
-        <EditTandaModal 
-          tanda={tanda} 
+        <EditLayawayModal 
+          layaway={layaway} 
           onClose={() => setIsEditOpen(false)} 
         />
       )}

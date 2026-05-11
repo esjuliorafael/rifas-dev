@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import { useRaffles } from './RaffleContext';
-import { useTandas } from './TandaContext';
+import { useLayaways } from './LayawayContext';
 import { PlusCircle, Ticket as TicketIcon, Calendar, ArrowRight, Trash2, X, Users, DollarSign } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'motion/react';
 
-export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (id: string) => void, onSelectTanda: (id: string) => void }) {
+export function Dashboard({ onSelectRaffle, onSelectLayaway }: { onSelectRaffle: (id: string) => void, onSelectLayaway: (id: string) => void }) {
   const { raffles, createRaffle, deleteRaffle } = useRaffles();
-  const { tandas, createTanda, deleteTanda } = useTandas();
+  const { layaways, createLayaway, deleteLayaway } = useLayaways();
   
-  const [activeTab, setActiveTab] = useState<'rifas' | 'tandas'>('rifas');
+  const [activeTab, setActiveTab] = useState<'rifas' | 'layaways'>('rifas');
   const [showCreate, setShowCreate] = useState(false);
 
   // Form state for Rifas
@@ -22,10 +22,10 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
   const [distribution, setDistribution] = useState<'lineal' | 'aleatoria'>('lineal');
   const [drawDate, setDrawDate] = useState('');
 
-  // Form state specifically for Tandas
-  const [tandaWeeks, setTandaWeeks] = useState('7');
-  const [tandaParticipants, setTandaParticipants] = useState('7');
-  const [tandaStartDate, setTandaStartDate] = useState('');
+  // Form state specifically for Layaways
+  const [layawayWeeks, setLayawayWeeks] = useState('7');
+  const [layawayParticipants, setLayawayParticipants] = useState('7');
+  const [layawayStartDate, setLayawayStartDate] = useState('');
 
   // Common optional state
   const [themeColor, setThemeColor] = useState('#10b981'); // Default emerald-500
@@ -41,9 +41,9 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
     setOpportunities('1');
     setDistribution('lineal');
     setDrawDate('');
-    setTandaWeeks('7');
-    setTandaParticipants('7');
-    setTandaStartDate('');
+    setLayawayWeeks('7');
+    setLayawayParticipants('7');
+    setLayawayStartDate('');
     setThemeColor('#10b981');
     // FIX 1
     setThemeColorText('#10b981');
@@ -67,13 +67,13 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
         themeColor: finalThemeColor
       });
     } else {
-      createTanda({
+      createLayaway({
         name,
         description,
         pricePerWeek: parseFloat(price),
-        numberOfWeeks: parseInt(tandaWeeks, 10),
-        numberOfParticipants: parseInt(tandaParticipants, 10),
-        startDate: tandaStartDate,
+        numberOfWeeks: parseInt(layawayWeeks, 10),
+        numberOfParticipants: parseInt(layawayParticipants, 10),
+        startDate: layawayStartDate,
         themeColor: finalThemeColor
       });
     }
@@ -104,8 +104,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
           Mis Rifas
         </button>
         <button 
-          onClick={() => setActiveTab('tandas')} 
-          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'tandas' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
+          onClick={() => setActiveTab('layaways')} 
+          className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'layaways' ? 'bg-white shadow text-gray-900' : 'text-gray-500 hover:text-gray-700'}`}
         >
           Mis Tandas
         </button>
@@ -225,8 +225,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Participantes</label>
                       <input 
                         type="number" required min="1" max="1000"
-                        value={tandaParticipants}
-                        onChange={(e) => setTandaParticipants(e.target.value)}
+                        value={layawayParticipants}
+                        onChange={(e) => setLayawayParticipants(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                       />
                     </div>
@@ -245,8 +245,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Duración (Semanas)</label>
                       <input 
                         type="number" required min="1" max="100"
-                        value={tandaWeeks}
-                        onChange={(e) => setTandaWeeks(e.target.value)}
+                        value={layawayWeeks}
+                        onChange={(e) => setLayawayWeeks(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"
                       />
                     </div>
@@ -254,8 +254,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
                       <label className="block text-sm font-semibold text-gray-700 mb-1">Fecha de Inicio</label>
                       <input 
                         type="date" required
-                        value={tandaStartDate}
-                        onChange={(e) => setTandaStartDate(e.target.value)}
+                        value={layawayStartDate}
+                        onChange={(e) => setLayawayStartDate(e.target.value)}
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none block"
                       />
                     </div>
@@ -396,8 +396,8 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
         )
       )}
 
-      {activeTab === 'tandas' && (
-         tandas.length === 0 ? (
+      {activeTab === 'layaways' && (
+         layaways.length === 0 ? (
           <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-300">
             <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-100 text-blue-600 rounded-full mb-4">
               <Users size={32} />
@@ -407,29 +407,29 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {tandas.map(tanda => {
+            {layaways.map(layaway => {
               let formattedDate = 'Sin fecha';
-              if (tanda.startDate) {
+              if (layaway.startDate) {
                 try {
-                  const [y, m, d] = tanda.startDate.split('-');
+                  const [y, m, d] = layaway.startDate.split('-');
                   formattedDate = format(new Date(Number(y), Number(m)-1, Number(d)), "dd MMM, yyyy", { locale: es });
                 } catch(e) {}
               }
 
               return (
                 <div 
-                  key={tanda.id} 
+                  key={layaway.id} 
                   className="bg-white rounded-2xl p-6 shadow-sm border border-gray-200 cursor-pointer hover:border-blue-500 hover:shadow-md transition-all group flex flex-col"
-                  onClick={() => onSelectTanda(tanda.id)}
+                  onClick={() => onSelectLayaway(layaway.id)}
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="bg-blue-50 text-blue-700 px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">
-                      {tanda.numberOfParticipants} Lugares • {tanda.numberOfWeeks} Semanas
+                      {layaway.numberOfParticipants} Lugares • {layaway.numberOfWeeks} Semanas
                     </div>
                     <button 
                       onClick={(e) => {
                         e.stopPropagation();
-                        if (confirm('¿Seguro que deseas eliminar esta tanda?')) deleteTanda(tanda.id);
+                        if (confirm('¿Seguro que deseas eliminar esta tanda?')) deleteLayaway(layaway.id);
                       }}
                       className="text-gray-400 hover:text-red-500 p-1"
                     >
@@ -437,9 +437,9 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
                     </button>
                   </div>
                   <h3 className="text-xl font-bold text-gray-900 mb-1 group-hover:text-blue-700 transition-colors">
-                    {tanda.name}
+                    {layaway.name}
                   </h3>
-                  {tanda.description && <p className="text-sm text-gray-500 mb-4 line-clamp-2">{tanda.description}</p>}
+                  {layaway.description && <p className="text-sm text-gray-500 mb-4 line-clamp-2">{layaway.description}</p>}
                   
                   <div className="mt-auto pt-4 space-y-4">
                     <div className="flex justify-between items-end">
@@ -449,7 +449,7 @@ export function Dashboard({ onSelectRaffle, onSelectTanda }: { onSelectRaffle: (
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-500 mb-1 flex items-center justify-end gap-1"><DollarSign size={14} /> Pago Semanal</p>
-                        <p className="font-bold text-gray-900 text-lg">${tanda.pricePerWeek}</p>
+                        <p className="font-bold text-gray-900 text-lg">${layaway.pricePerWeek}</p>
                       </div>
                     </div>
                   </div>
