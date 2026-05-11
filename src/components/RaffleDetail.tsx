@@ -52,15 +52,22 @@ export function RaffleDetail({ raffleId }: { raffleId: string }) {
     try {
       // Small delay to ensure rendering is settled
       await new Promise(res => setTimeout(res, 100));
+      
       const dataUrl = await toJpeg(gridRef.current, { 
         quality: 0.95,
         backgroundColor: raffle.themeColor ? blendWithWhite(raffle.themeColor, 0.1) : '#f9fafb',
         style: {
-          padding: '24px',
-          margin: '0',
-          borderRadius: '0'
-        }
+          padding: '32px', // Aumentamos y aseguramos simetría
+          margin: '0px',
+          borderRadius: '0px',
+          border: 'none',
+          boxShadow: 'none',
+          display: 'block' // Asegurar que sea bloque
+        },
+        width: gridRef.current.offsetWidth + 64, // Compensar el padding extra (32+32)
+        height: gridRef.current.offsetHeight + 64
       });
+
       const link = document.createElement('a');
       link.download = `rifa-${raffle.name.replace(/\s+/g, '-').toLowerCase()}-boletos.jpeg`;
       link.href = dataUrl;

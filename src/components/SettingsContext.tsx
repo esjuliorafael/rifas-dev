@@ -1,23 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { supabase } from '../utils/supabase';
 
 export interface Settings {
   logoUrl: string | null;
-  paymentName?: string;
-  paymentBank?: string;
-  paymentClabe?: string;
-  paymentCard?: string;
-  paymentPhone?: string;
-  paymentAlias?: string;
+  paymentName: string;
+  paymentBank: string;
+  paymentClabe: string;
+  paymentCard: string;
+  paymentPhone: string;
+  paymentAlias: string;
 }
 
 interface SettingsContextType {
   settings: Settings;
-  updateSettings: (newSettings: Partial<Settings>) => void;
+  loading: boolean;
+  updateSettings: (newSettings: Partial<Settings>) => Promise<void>;
+  refreshSettings: () => Promise<void>;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
-
-const SETTINGS_STORAGE_KEY = 'rifas-pro-settings';
 
 const defaultSettings: Settings = {
   logoUrl: null,
@@ -30,26 +31,81 @@ const defaultSettings: Settings = {
 };
 
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
-  const [settings, setSettings] = useState<Settings>(() => {
+  const [settings, setSettings] = useState<Settings>(defaultSettings);
+  const [loading, setLoading] = useState(true);
+
+  const fetchSettings = async () => {
     try {
-      const stored = localStorage.getItem(SETTINGS_STORAGE_KEY);
-      if (stored) return { ...defaultSettings, ...JSON.parse(stored) };
-    } catch (e) {
-      console.warn("Failed to load settings", e);
+      setLoading(true);
+      const { data, error } = await supabase
+        .from('settings')
+        .select('*')
+        .eq('id', 1)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 is "No rows found"
+        throw error;
+      }
+
+      if (data) {
+        setSettings({
+          logoUrl: data.logo_url,
+          paymentName: data.payment_name || '',
+          paymentBank: data.payment_bank || '',
+          paymentClabe: data.payment_clabe || '',
+          paymentCard: data.payment_card || '',
+          paymentPhone: data.payment_phone || '',
+          paymentAlias: data.payment_alias || ''
+        });
+      } else {
+        // If no settings exist, try to initialize with default or localStorage migration
+        const stored = localStorage.getItem('rifas-pro-settings');
+        if (stored) {
+          const parsed = JSON.parse(stored);
+          const initialSettings = { ...defaultSettings, ...parsed };
+          await updateSettings(initialSettings);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching settings:', error);
+    } finally {
+      setLoading(false);
     }
-    return defaultSettings;
-  });
+  };
 
   useEffect(() => {
-    localStorage.setItem(SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  }, [settings]);
+    fetchSettings();
+  }, []);
 
-  const updateSettings = (newSettings: Partial<Settings>) => {
-    setSettings(prev => ({ ...prev, ...newSettings }));
+  const updateSettings = async (newSettings: Partial<Settings>) => {
+    const updated = { ...settings, ...newSettings };
+    
+    try {
+      const { error } = await supabase
+        .from('settings')
+        .upsert({
+          id: 1,
+          logo_url: updated.logoUrl,
+          payment_name: updated.paymentName,
+          payment_bank: updated.paymentBank,
+          payment_clabe: updated.paymentClabe,
+          payment_card: updated.paymentCard,
+          payment_phone: updated.paymentPhone,
+          payment_alias: updated.paymentAlias
+        });
+
+      if (error) throw error;
+      setSettings(updated);
+      // Keep localStorage as backup/sync for immediate UI response if needed
+      localStorage.setItem('rifas-pro-settings', JSON.stringify(updated));
+    } catch (error) {
+      console.error('Error updating settings:', error);
+      throw error;
+    }
   };
 
   return (
-    <SettingsContext.Provider value={{ settings, updateSettings }}>
+    <SettingsContext.Provider value={{ settings, loading, updateSettings, refreshSettings: fetchSettings }}>
       {children}
     </SettingsContext.Provider>
   );
