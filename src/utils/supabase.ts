@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Usar el mÃ©todo estÃ¡ndar de Vite para cargar variables
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+// Estas variables son inyectadas como texto plano por Vite durante el build
+// @ts-ignore
+const supabaseUrl = __SUPABASE_URL__;
+// @ts-ignore
+const supabaseAnonKey = __SUPABASE_ANON_KEY__;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  // Este log nos ayudarÃ¡ a saber si el problema es que la variable estÃ¡ vacÃ­a
-  console.error('ERROR: Las variables VITE_SUPABASE no estÃ¡n llegando al cliente.');
+  console.error('CRITICAL: Supabase constants are empty strings.');
 }
 
-export const supabase = createClient(supabaseUrl || '', supabaseAnonKey || '');
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
