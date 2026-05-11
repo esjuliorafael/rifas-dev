@@ -5,23 +5,19 @@ import { defineConfig, loadEnv } from 'vite';
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, process.cwd(), '');
-  
-  // Fusionar variables de .env y de process.env (Cloudflare)
   const allEnv = { ...process.env, ...env };
 
-  console.log('--- DEPURACIÃN DE VARIABLES VITE_ ---');
-  Object.keys(allEnv).forEach(key => {
-    if (key.startsWith('VITE_')) {
-      console.log(`Detectada: ${key} (Longitud: ${allEnv[key]?.length})`);
-    }
-  });
-  console.log('---------------------------------------');
-
+  // Usamos el nuevo nombre 'VITE_CLAVE'
   const supabaseUrl = allEnv.VITE_SUPABASE_URL;
-  const supabaseKey = allEnv.VITE_SUPABASE_ANON_KEY;
+  const supabaseKey = allEnv.VITE_CLAVE || allEnv.VITE_SUPABASE_ANON_KEY;
+
+  console.log('--- DIAGNÃSTICO DE ENTORNO V2 ---');
+  console.log('URL detectada:', supabaseUrl ? 'SÃ' : 'NO');
+  console.log('VITE_CLAVE detectada:', allEnv.VITE_CLAVE ? 'SÃ' : 'NO');
+  console.log('---------------------------------');
 
   if (!supabaseKey && mode === 'production') {
-    throw new Error('FATAL: VITE_SUPABASE_ANON_KEY no detectada. Revisa los nombres arriba.');
+    throw new Error('FATAL: Ni VITE_CLAVE ni VITE_SUPABASE_ANON_KEY fueron detectadas.');
   }
 
   return {
