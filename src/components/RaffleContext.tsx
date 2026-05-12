@@ -46,7 +46,6 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
               ownerName: t.owner_name || undefined,
               ownerPhone: t.owner_phone || undefined,
               paidAt: t.paid_at || undefined,
-              // Recuperamos los nÃºmeros extra si existen, si no usamos solo el principal
               numbers: t.extra_numbers ? [t.number, ...t.extra_numbers] : [t.number]
             };
           });
@@ -63,6 +62,7 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
           createdAt: r.created_at,
           drawDate: r.draw_date,
           themeColor: r.theme_color,
+          columnsPreference: r.columns_preference || 10, // Recuperar preferencia
           totalUniverse: r.total_tickets * (r.opportunities || 1),
           tickets: ticketsMap
         } as Raffle;
@@ -99,14 +99,14 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
           opportunities: data.opportunities,
           distribution: data.distribution,
           draw_date: data.drawDate,
-          theme_color: data.themeColor
+          theme_color: data.themeColor,
+          columns_preference: 10 // Default inicial
         }])
         .select()
         .single();
 
       if (raffleError) throw raffleError;
 
-      // LÃGICA DE GENERACIÃN DE NÃMEROS (Igual a la original pero con guardado en DB)
       const universe: number[] = [];
       const start = isPowerOf10 ? 0 : 1;
       const end = isPowerOf10 ? totalUniverse - 1 : totalUniverse;
@@ -156,7 +156,7 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
               raffle_id: newRaffleData.id,
               number: mStr,
               status: 'available',
-              extra_numbers: extraNumbers // Guardamos el array de nÃºmeros extra
+              extra_numbers: extraNumbers
           });
       }
 
@@ -183,6 +183,7 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateRaffle = async (id: string, updates: Partial<Raffle>) => {
+    // Sincronizar preferencia de columnas y otros datos en DB
     const { error } = await supabase
       .from('raffles')
       .update({
@@ -190,7 +191,8 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
         description: updates.description,
         status: updates.status,
         draw_date: updates.drawDate,
-        theme_color: updates.themeColor
+        theme_color: updates.themeColor,
+        columns_preference: updates.columnsPreference // Persistir preferencia
       })
       .eq('id', id);
 
