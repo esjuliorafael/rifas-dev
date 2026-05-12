@@ -1,28 +1,26 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Estas constantes son inyectadas por Vite durante el build (Fuerza Bruta)
+// Constantes inyectadas por Vite (Fuerza Bruta)
 // @ts-ignore
 const supabaseUrl = __SUPABASE_URL__;
 // @ts-ignore
 const supabaseAnonKey = __SUPABASE_ANON_KEY__;
 
 if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('CRITICAL: Supabase constants are missing in the build.');
+  console.error('CRITICAL: Supabase credentials missing.');
 }
 
-// InicializaciÃ³n ultra-explÃ­cita para evitar errores 401 por falta de headers
+/**
+ * SOLUCIÃN SEGÃN DISCUSIÃN SUPABASE:
+ * Las nuevas llaves 'sb_publishable' NO deben enviarse como Bearer tokens.
+ * La librerÃ­a se encarga de enviarlas correctamente en el header 'apikey'.
+ */
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
-  global: {
-    headers: {
-      'apikey': supabaseAnonKey,
-      'Authorization': `Bearer ${supabaseAnonKey}`
-    }
-  },
   auth: {
     persistSession: true,
-    autoRefreshToken: true
+    autoRefreshToken: true,
+    detectSessionInUrl: true
   }
 });
 
-// Prueba de conexiÃ³n inmediata para diagnÃ³stico en consola del navegador
-console.log('Supabase Client Initialized. Target URL:', supabaseUrl);
+console.log('Supabase Client Initialized with New Key Protocol.');
