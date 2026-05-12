@@ -46,13 +46,14 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
               ownerName: t.owner_name || undefined,
               ownerPhone: t.owner_phone || undefined,
               paidAt: t.paid_at || undefined,
-              numbers: [t.number] 
+              // Recuperamos los nÃºmeros extra si existen, si no usamos solo el principal
+              numbers: t.extra_numbers ? [t.number, ...t.extra_numbers] : [t.number]
             };
           });
 
         return {
           id: r.id,
-          name: r.title, // Mapeamos 'title' de DB a 'name' del UI
+          name: r.title,
           title: r.title,
           description: r.description || '',
           pricePerTicket: Number(r.ticket_price),
@@ -88,7 +89,6 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
       const padLength = Math.max(maxNumberStr.length, 2);
       const formatNum = (num: number) => num.toString().padStart(padLength, '0');
 
-      // 1. Insert Raffle
       const { data: newRaffleData, error: raffleError } = await supabase
         .from('raffles')
         .insert([{
@@ -106,26 +106,61 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
 
       if (raffleError) throw raffleError;
 
-      // 2. Generate Tickets
+      // LÃGICA DE GENERACIÃN DE NÃMEROS (Igual a la original pero con guardado en DB)
       const universe: number[] = [];
       const start = isPowerOf10 ? 0 : 1;
       const end = isPowerOf10 ? totalUniverse - 1 : totalUniverse;
       for (let i = start; i <= end; i++) universe.push(i);
 
       let mainNumberInts: number[] = [];
+      let extraPool: number[] = [];
+
       if (data.opportunities === 1) {
           mainNumberInts = [...universe];
       } else {
           for(let i = 1; i <= data.totalTickets; i++) mainNumberInts.push(i);
+          for (const u of universe) {
+              if (!mainNumberInts.includes(u)) extraPool.push(u);
+          }
       }
 
-      const ticketsToInsert = mainNumberInts.map(mInt => ({
-        raffle_id: newRaffleData.id,
-        number: formatNum(mInt),
-        status: 'available'
-      }));
+      if (data.distribution === 'aleatoria') {
+          for (let i = extraPool.length - 1; i > 0; i--) {
+              const j = Math.floor(Math.random() * (i + 1));
+              [extraPool[i], extraPool[j]] = [extraPool[j], extraPool[i]];
+          }
+      }
 
-      const batchSize = 300; // Reducimos mÃ¡s el lote por seguridad
+      const ticketsToInsert = [];
+      for (let index = 0; index < mainNumberInts.length; index++) {
+          const mInt = mainNumberInts[index];
+          const mStr = formatNum(mInt);
+          const extraNumbers: string[] = [];
+
+          if (data.opportunities > 1) {
+              if (data.distribution === 'aleatoria') {
+                  for (let k = 1; k < data.opportunities; k++) {
+                     const extraInt = extraPool.pop();
+                     if (extraInt !== undefined) extraNumbers.push(formatNum(extraInt));
+                  }
+              } else {
+                  for (let k = 1; k < data.opportunities; k++) {
+                     let extraInt = mInt + k * data.totalTickets;
+                     if (isPowerOf10) extraInt = extraInt % totalUniverse;
+                     extraNumbers.push(formatNum(extraInt));
+                  }
+              }
+          }
+
+          ticketsToInsert.push({
+              raffle_id: newRaffleData.id,
+              number: mStr,
+              status: 'available',
+              extra_numbers: extraNumbers // Guardamos el array de nÃºmeros extra
+          });
+      }
+
+      const batchSize = 300;
       for (let i = 0; i < ticketsToInsert.length; i += batchSize) {
         const batch = ticketsToInsert.slice(i, i + batchSize);
         const { error: tErr } = await supabase.from('tickets').insert(batch);
@@ -135,7 +170,6 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
       await fetchRaffles();
     } catch (err) {
       console.error('Error creating raffle:', err);
-      // Extraer mensaje detallado de Supabase si existe
       const errorMsg = (err as any)?.message || 'Error desconocido';
       alert(`Error al crear la rifa: ${errorMsg}`);
       throw err;
