@@ -22,6 +22,7 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
   const fetchRaffles = async () => {
     try {
       setLoading(true);
+      // 1. Obtener las rifas
       const { data: rafflesData, error: rafflesError } = await supabase
         .from('raffles')
         .select('*')
@@ -29,43 +30,46 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
 
       if (rafflesError) throw rafflesError;
 
-      const fullRaffles: Raffle[] = await Promise.all((rafflesData || []).map(async (r) => {
-        const { data: ticketsData, error: ticketsError } = await supabase
-          .from('tickets')
-          .select('*')
-          .eq('raffle_id', r.id);
+      // 2. Obtener todos los tickets de una sola vez para ser mÃ¡s eficiente
+      const { data: allTicketsData, error: allTicketsError } = await supabase
+        .from('tickets')
+        .select('*');
 
-        if (ticketsError) throw ticketsError;
+      if (allTicketsError) throw allTicketsError;
 
+      const fullRaffles: Raffle[] = (rafflesData || []).map((r) => {
         const ticketsMap: Record<string, Ticket> = {};
-        (ticketsData || []).forEach(t => {
-          // Re-calculate numbers based on logic if needed, 
-          // but here we assume 'number' in DB is the ID/Main number
-          // For opportunities > 1, we might need a better storage, 
-          // but let's follow the existing logic for now.
-          ticketsMap[t.number] = {
-            id: t.number,
-            status: t.status as any,
-            ownerName: t.owner_name || undefined,
-            ownerPhone: t.owner_phone || undefined,
-            paidAt: t.paid_at || undefined,
-            numbers: [t.number] // Simplified for now, will enhance
-          };
-        });
+        
+        // Filtrar tickets pertenecientes a esta rifa
+        (allTicketsData || [])
+          .filter(t => t.raffle_id === r.id)
+          .forEach(t => {
+            ticketsMap[t.number] = {
+              id: t.number,
+              status: t.status as any,
+              ownerName: t.owner_name || undefined,
+              ownerPhone: t.owner_phone || undefined,
+              paidAt: t.paid_at || undefined,
+              numbers: [t.number] 
+            };
+          });
 
         return {
           id: r.id,
           title: r.title,
+          name: r.title, // El campo en el UI es 'name'
           description: r.description || '',
-          ticketPrice: Number(r.ticket_price),
+          pricePerTicket: Number(r.ticket_price),
           totalTickets: r.total_tickets,
-          opportunities: r.opportunities,
-          distribution: r.distribution,
+          opportunities: r.opportunities || 1,
+          distribution: r.distribution || 'lineal',
           createdAt: r.created_at,
-          totalUniverse: r.total_tickets * r.opportunities,
+          drawDate: r.draw_date,
+          themeColor: r.theme_color,
+          totalUniverse: r.total_tickets * (r.opportunities || 1),
           tickets: ticketsMap
         } as Raffle;
-      }));
+      });
 
       setRaffles(fullRaffles);
     } catch (error) {
@@ -79,58 +83,66 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
     fetchRaffles();
   }, []);
 
-  const createRaffle = async (data: Omit<Raffle, 'id' | 'createdAt' | 'tickets' | 'totalUniverse'>) => {
-    const totalUniverse = data.totalTickets * data.opportunities;
-    const isPowerOf10 = (totalUniverse === 10 || totalUniverse === 100 || totalUniverse === 1000 || totalUniverse === 10000);
-    
-    const maxNumberStr = isPowerOf10 ? (totalUniverse - 1).toString() : totalUniverse.toString();
-    const padLength = Math.max(maxNumberStr.length, 2);
-    const formatNum = (num: number) => num.toString().padStart(padLength, '0');
+  const createRaffle = async (data: any) => {
+    try {
+      const totalUniverse = data.totalTickets * data.opportunities;
+      const isPowerOf10 = (totalUniverse === 10 || totalUniverse === 100 || totalUniverse === 1000 || totalUniverse === 10000);
+      
+      const maxNumberStr = isPowerOf10 ? (totalUniverse - 1).toString() : totalUniverse.toString();
+      const padLength = Math.max(maxNumberStr.length, 2);
+      const formatNum = (num: number) => num.toString().padStart(padLength, '0');
 
-    // 1. Insert Raffle
-    const { data: newRaffleData, error: raffleError } = await supabase
-      .from('raffles')
-      .insert([{
-        title: data.title,
-        description: data.description,
-        ticket_price: data.ticketPrice,
-        total_tickets: data.totalTickets,
-        opportunities: data.opportunities,
-        distribution: data.distribution
-      }])
-      .select()
-      .single();
+      // 1. Insert Raffle
+      const { data: newRaffleData, error: raffleError } = await supabase
+        .from('raffles')
+        .insert([{
+          title: data.name,
+          description: data.description,
+          ticket_price: data.pricePerTicket,
+          total_tickets: data.totalTickets,
+          opportunities: data.opportunities,
+          distribution: data.distribution,
+          draw_date: data.drawDate,
+          theme_color: data.themeColor
+        }])
+        .select()
+        .single();
 
-    if (raffleError) throw raffleError;
+      if (raffleError) throw raffleError;
 
-    // 2. Generate Tickets Logic (same as before but for DB)
-    const universe: number[] = [];
-    const start = isPowerOf10 ? 0 : 1;
-    const end = isPowerOf10 ? totalUniverse - 1 : totalUniverse;
-    for (let i = start; i <= end; i++) universe.push(i);
+      // 2. Generate Tickets
+      const universe: number[] = [];
+      const start = isPowerOf10 ? 0 : 1;
+      const end = isPowerOf10 ? totalUniverse - 1 : totalUniverse;
+      for (let i = start; i <= end; i++) universe.push(i);
 
-    let mainNumberInts: number[] = [];
-    if (data.opportunities === 1) {
-        mainNumberInts = [...universe];
-    } else {
-        for(let i = 1; i <= data.totalTickets; i++) mainNumberInts.push(i);
+      let mainNumberInts: number[] = [];
+      if (data.opportunities === 1) {
+          mainNumberInts = [...universe];
+      } else {
+          for(let i = 1; i <= data.totalTickets; i++) mainNumberInts.push(i);
+      }
+
+      const ticketsToInsert = mainNumberInts.map(mInt => ({
+        raffle_id: newRaffleData.id,
+        number: formatNum(mInt),
+        status: 'available'
+      }));
+
+      // Insert in smaller batches (500) to ensure success
+      const batchSize = 500;
+      for (let i = 0; i < ticketsToInsert.length; i += batchSize) {
+        const batch = ticketsToInsert.slice(i, i + batchSize);
+        const { error: tErr } = await supabase.from('tickets').insert(batch);
+        if (tErr) throw tErr;
+      }
+
+      await fetchRaffles();
+    } catch (err) {
+      console.error('Error creating raffle:', err);
+      alert('Error al crear la rifa. Revisa la consola para mÃ¡s detalles.');
+      throw err;
     }
-
-    const ticketsToInsert = mainNumberInts.map(mInt => ({
-      raffle_id: newRaffleData.id,
-      number: formatNum(mInt),
-      status: 'available'
-    }));
-
-    // Insert in batches of 1000 to avoid limits
-    const batchSize = 1000;
-    for (let i = 0; i < ticketsToInsert.length; i += batchSize) {
-      const batch = ticketsToInsert.slice(i, i + batchSize);
-      const { error: ticketsError } = await supabase.from('tickets').insert(batch);
-      if (ticketsError) throw ticketsError;
-    }
-
-    await fetchRaffles();
   };
 
   const deleteRaffle = async (id: string) => {
@@ -143,9 +155,11 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase
       .from('raffles')
       .update({
-        title: updates.title,
+        title: updates.title || (updates as any).name,
         description: updates.description,
-        status: updates.status
+        status: updates.status,
+        draw_date: updates.drawDate,
+        theme_color: updates.themeColor
       })
       .eq('id', id);
 
