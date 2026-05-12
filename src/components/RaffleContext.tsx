@@ -5,7 +5,7 @@ import { supabase } from '../utils/supabase';
 interface RaffleContextType {
   raffles: Raffle[];
   loading: boolean;
-  createRaffle: (raffle: Omit<Raffle, 'id' | 'createdAt' | 'tickets' | 'totalUniverse'>) => Promise<void>;
+  createRaffle: (raffle: any) => Promise<void>;
   deleteRaffle: (id: string) => Promise<void>;
   updateTicket: (raffleId: string, ticketId: string, updates: Partial<Ticket>) => Promise<void>;
   updateRaffle: (raffleId: string, updates: Partial<Raffle>) => Promise<void>;
@@ -22,7 +22,6 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
   const fetchRaffles = async () => {
     try {
       setLoading(true);
-      // 1. Obtener las rifas
       const { data: rafflesData, error: rafflesError } = await supabase
         .from('raffles')
         .select('*')
@@ -30,7 +29,6 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
 
       if (rafflesError) throw rafflesError;
 
-      // 2. Obtener todos los tickets de una sola vez para ser mÃ¡s eficiente
       const { data: allTicketsData, error: allTicketsError } = await supabase
         .from('tickets')
         .select('*');
@@ -39,8 +37,6 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
 
       const fullRaffles: Raffle[] = (rafflesData || []).map((r) => {
         const ticketsMap: Record<string, Ticket> = {};
-        
-        // Filtrar tickets pertenecientes a esta rifa
         (allTicketsData || [])
           .filter(t => t.raffle_id === r.id)
           .forEach(t => {
@@ -56,8 +52,8 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
 
         return {
           id: r.id,
+          name: r.title, // Mapeamos 'title' de DB a 'name' del UI
           title: r.title,
-          name: r.title, // El campo en el UI es 'name'
           description: r.description || '',
           pricePerTicket: Number(r.ticket_price),
           totalTickets: r.total_tickets,
@@ -129,8 +125,7 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
         status: 'available'
       }));
 
-      // Insert in smaller batches (500) to ensure success
-      const batchSize = 500;
+      const batchSize = 300; // Reducimos mÃ¡s el lote por seguridad
       for (let i = 0; i < ticketsToInsert.length; i += batchSize) {
         const batch = ticketsToInsert.slice(i, i + batchSize);
         const { error: tErr } = await supabase.from('tickets').insert(batch);
@@ -140,7 +135,9 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
       await fetchRaffles();
     } catch (err) {
       console.error('Error creating raffle:', err);
-      alert('Error al crear la rifa. Revisa la consola para mÃ¡s detalles.');
+      // Extraer mensaje detallado de Supabase si existe
+      const errorMsg = (err as any)?.message || 'Error desconocido';
+      alert(`Error al crear la rifa: ${errorMsg}`);
       throw err;
     }
   };
@@ -155,7 +152,7 @@ export function RaffleProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase
       .from('raffles')
       .update({
-        title: updates.title || (updates as any).name,
+        title: (updates as any).name || updates.title,
         description: updates.description,
         status: updates.status,
         draw_date: updates.drawDate,
